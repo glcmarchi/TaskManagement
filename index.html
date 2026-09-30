@@ -217,7 +217,6 @@
                         <div class="flex items-center space-x-3 text-xs flex-wrap gap-2">
                             <input id="filter-search" type="text" oninput="renderTasks()" placeholder="Cerca task..." class="px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 outline-none w-36">
                             
-                            <!-- FILTRO CANALE / TIPO -->
                             <select id="filter-type" onchange="renderTasks()" class="px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 font-medium outline-none">
                                 <option value="all">Tutti i Canali/Tipi</option>
                                 <option value="telefono">Telefono</option>
@@ -275,7 +274,7 @@
                 </div>
             </div>
 
-            <!-- VISTA: PROGRAMMA SETTIMANALE REALETIME CON DRAG & DROP PERFETTO -->
+            <!-- VISTA: PROGRAMMA SETTIMANALE REALETIME -->
             <div id="tab-program" class="p-8 space-y-6 hidden">
                 <div class="flex justify-between items-center">
                     <div>
@@ -311,7 +310,6 @@
                     </div>
                 </div>
 
-                <!-- AREA NASCOSTA DEDICATA ALLA STAMPA -->
                 <div id="print-area" class="print-area hidden bg-white p-8"></div>
             </div>
 
@@ -433,7 +431,7 @@
         let tasksList = [];
         let selectedTypes = [];
         let editSelectedTypes = [];
-        let draggedTaskId = null; // Variabile globale per garantire il Drag & Drop
+        let draggedTaskId = null;
 
         const typeIcons = {
             telefono: { icon: 'phone', label: 'Telefono' },
@@ -444,7 +442,6 @@
             testing: { icon: 'flask-conical', label: 'Testing' }
         };
 
-        // CALCOLO ISO WEEK E RANGE DATE LUN-VEN
         function getISOWeekInfo(dateObj) {
             const date = new Date(dateObj.getTime());
             date.setHours(0,0,0,0);
@@ -463,7 +460,6 @@
             return { weekNum: weekNum, rangeStr: rangeStr };
         }
 
-        // BADGE DEADLINE CON COLORI
         function getDeadlineBadge(deadlineStr) {
             if (!deadlineStr) return '';
             const today = new Date();
@@ -483,7 +479,6 @@
             </span>`;
         }
 
-        // GESTIONE DRAG & DROP REALE GARANTITA
         function allowDrop(ev) { ev.preventDefault(); if (ev.currentTarget) ev.currentTarget.classList.add('drag-over'); }
         function clearDropStyle(ev) { if (ev.currentTarget) ev.currentTarget.classList.remove('drag-over'); }
         function handleDragStart(ev, taskId) { 
@@ -694,14 +689,13 @@
             loadTasksFromCloud();
         }
 
-        // APERTURA MODALE CON POPOLAMENTO DEDICATO TASK LIBERI
+        // MOSTRA TUTTI I TASK LIBERI (Qualsiasi task senza settimana o con week == null / 0 / undefined)
         function openAssignWeekModal(weekNum) {
             document.getElementById('assign-week-num').value = weekNum;
             document.getElementById('assign-week-label').innerText = 'Settimana ' + weekNum;
 
             const select = document.getElementById('unassigned-task-select');
 
-            // MOSTRA TUTTI I TASK LIBERI (week è null, 0 o indefinito)
             const unassigned = tasksList.filter(function(t) {
                 return !t.week || t.week == 0;
             });
@@ -871,7 +865,6 @@
             });
         }
 
-        // PROGRAMMA SETTIMANALE CON SCHEDE VERDI E DRAG & DROP
         function renderProgram() {
             const container = document.getElementById('program-weeks-container');
             if (!container) return;
