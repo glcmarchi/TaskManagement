@@ -399,7 +399,7 @@
         const SUPABASE_ANON_KEY = "sb_publishable_2H6o6gTA4lBy4RlG50p1eQ_iPp03lY6";
 
         let supabaseClient = null;
-        if (typeof window.supabase !== 'undefined' && SUPABASE_ANON_KEY !== "INSERISCI_QUI_LA_TUA_PUBLISHABLE_KEY" && SUPABASE_ANON_KEY !== "") {
+        if (typeof window.supabase !== 'undefined') {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 
@@ -457,21 +457,23 @@
             </span>`;
         }
 
-        // DRAG & DROP
+        // DRAG & DROP REALE CON RICARICAMENTO
         function allowDrop(ev) { ev.preventDefault(); if (ev.currentTarget) ev.currentTarget.classList.add('drag-over'); }
         function clearDropStyle(ev) { if (ev.currentTarget) ev.currentTarget.classList.remove('drag-over'); }
         function handleDragStart(ev, taskId) { ev.dataTransfer.setData("taskId", taskId); }
+
         async function handleDrop(ev, newStatus) {
             ev.preventDefault(); clearDropStyle(ev);
             const taskId = ev.dataTransfer.getData("taskId");
             if (taskId) await updateTaskStatus(taskId, newStatus);
         }
+
         async function handleDropWeek(ev, weekNum) {
             ev.preventDefault(); clearDropStyle(ev);
             const taskId = ev.dataTransfer.getData("taskId");
             if (taskId) {
                 await supabaseClient.from('tasks').update({ week: weekNum }).eq('id', taskId);
-                loadTasksFromCloud();
+                await loadTasksFromCloud();
             }
         }
 
@@ -648,36 +650,33 @@
             loadTasksFromCloud();
         }
 
-        // APERTURA MODALE CON FILTRO CORRETTO PERIODE/COMPLETATI
+        // APERTURA MODALE PER ALLOCARE TASK NON ASSEGNATI
         function openAssignWeekModal(weekNum) {
             document.getElementById('assign-week-num').value = weekNum;
             document.getElementById('assign-week-label').innerText = 'Settimana ' + weekNum;
 
             const select = document.getElementById('unassigned-task-select');
-            
-            const currentISOWeek = getISOWeekInfo(new Date()).weekNum;
 
-            // FILTRO TASK LIBERI:
-            // 1. Non deve essere già assegnato a un'altra settimana.
-            // 2. Se è completato, è selezionabile SOLO SE appartiene alla settimana corrente o successiva.
+            // MOSTRA TUTTI I TASK LIBERI (Non assegnati ad altre settimane)
             const unassigned = tasksList.filter(function(t) {
-                const taskWeek = t.deadline ? getISOWeekInfo(new Date(t.deadline)).weekNum : t.week;
+                // Se ha già una settimana assegnata diversa da quella corrente, escludilo
+                if (t.week && t.week != 0 && t.week != weekNum) return false;
                 
-                // Se è già assegnato a un'altra settimana diversa da quella corrente selezionata, va escluso
-                if (taskWeek && taskWeek != weekNum) return false;
-
-                // Se il task è completato, lo mostriamo solo se appartiene alla settimana target
-                if (t.status === 'completato' && taskWeek && taskWeek < currentISOWeek) return false;
+                // Se ha una deadline con settimana diversa, escludilo
+                if (t.deadline) {
+                    const dlWeek = getISOWeekInfo(new Date(t.deadline)).weekNum;
+                    if (dlWeek != weekNum) return false;
+                }
 
                 return true;
             });
 
             if (unassigned.length === 0) {
-                select.innerHTML = '<option value="">Nessun task disponibile per l allocazione</option>';
+                select.innerHTML = '<option value="">Tutti i tuoi task sono già assegnati!</option>';
             } else {
                 select.innerHTML = unassigned.map(function(t) {
                     const statusLabel = t.status === 'completato' ? ' [COMPLETATO]' : '';
-                    return '<option value="' + t.id + '">' + t.title + statusLabel + ' (' + (t.project || 'Generale') + ' - Effort: ' + (t.size||'M') + ')</option>';
+                    return '<option value="' + t.id + '">' + t.title + statusLabel + ' (' + (t.project || 'Generale') + ' - Taglia: ' + (t.size||'M') + ')</option>';
                 }).join('');
             }
 
@@ -692,12 +691,12 @@
 
             await supabaseClient.from('tasks').update({ week: weekNum }).eq('id', taskId);
             closeModal('assign-week-task-modal');
-            loadTasksFromCloud();
+            await loadTasksFromCloud();
         }
 
         async function removeTaskFromWeek(taskId) {
-            await supabaseClient.from('tasks').update({ week: null, deadline: null }).eq('id', taskId);
-            loadTasksFromCloud();
+            await supabaseClient.from('tasks').update({ week: null }).eq('id', taskId);
+            await loadTasksFromCloud();
         }
 
         async function updateTaskStatus(id, newStatus) {
@@ -817,7 +816,7 @@
             });
         }
 
-        // VISTA PROGRAMMA SETTIMANALE CON SCHEDE VERDI SE COMPLETATE
+        // RENDERING PROGRAMMA SETTIMANALE CON SCHEDE COMPLETATE IN VERDE
         function renderProgram() {
             const container = document.getElementById('program-weeks-container');
             if (!container) return;
@@ -839,10 +838,10 @@
 
                 const taskItems = wTasks.map(function(t) {
                     const isCompleted = t.status === 'completato';
-                    const bgClass = isCompleted ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200';
-                    const statusBadge = isCompleted ? '<span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-0.5 rounded">Fatto</span>' : '<span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-0.5 rounded">In Corso</span>';
+                    const bgClass = isCompleted ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200';
+                    const statusBadge = isCompleted ? '<span class="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">FATTO</span>' : '<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">IN CORSO</span>';
 
-                    return '<div draggable="true" ondragstart="handleDragStart(event, \'' + t.id + '\')" class="' + bgClass + ' p-3 rounded-lg border shadow-sm flex justify-between items-center cursor-grab hover:border-blue-400 transition">' +
+                    return '<div draggable="true" ondragstart="handleDragStart(event, \'' + t.id + '\')" class="' + bgClass + ' p-3 rounded-lg border shadow-sm flex justify-between items-center cursor-grab hover:border-blue-500 transition">' +
                         '<div class="flex items-center space-x-2">' +
                             '<span class="font-medium text-sm ' + (isCompleted ? 'line-through text-gray-500' : 'text-gray-800') + '">' + t.title + '</span>' +
                             '<span class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-medium">' + (t.project || 'Generale') + '</span>' +
@@ -870,7 +869,7 @@
                         '</div>' +
                     '</div>' +
                     '<div class="space-y-2 min-h-[80px] bg-slate-50 p-3 rounded-lg border border-dashed border-gray-200">' +
-                        (taskItems || '<p class="text-xs text-gray-400 text-center py-2">Nessun task assegnato a questa settimana</p>') +
+                        (taskItems || '<p class="text-xs text-gray-400 text-center py-2">Nessun task assegnato a questa settimana. Fai clic su "+ Assegna Task Esistente" o trascinalo qui.</p>') +
                     '</div>' +
                 '</div>';
             }).join('');
