@@ -64,6 +64,10 @@
                         <i data-lucide="zap" class="w-5 h-5"></i>
                         <span>Priorità Oggi</span>
                     </button>
+                    <button onclick="switchTab('kanban')" id="nav-kanban" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
+                        <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                        <span>Vista Kanban</span>
+                    </button>
                     <button onclick="switchTab('projects')" id="nav-projects" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
                         <i data-lucide="folder-tree" class="w-5 h-5"></i>
                         <span>Progetti & Attività</span>
@@ -71,6 +75,10 @@
                     <button onclick="switchTab('gantt')" id="nav-gantt" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
                         <i data-lucide="gantt-chart" class="w-5 h-5"></i>
                         <span>Vista Gantt</span>
+                    </button>
+                    <button onclick="switchTab('reporting')" id="nav-reporting" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span>Reporting</span>
                     </button>
                     <button onclick="switchTab('admin')" id="nav-admin" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 hidden">
                         <i data-lucide="shield-check" class="w-5 h-5"></i>
@@ -94,7 +102,7 @@
 
         <!-- AREA CONTENUTO PRINCIPALE -->
         <main class="flex-1 bg-slate-50 flex flex-col overflow-y-auto">
-            <!-- HEADER CON DATA ENTRY RAPIDO E TAG TIPOLOGIA -->
+            <!-- HEADER CON DATA ENTRY RAPIDO -->
             <header class="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-10 space-y-3">
                 <form onsubmit="addTask(event)" class="space-y-3">
                     <div class="flex items-center space-x-3">
@@ -116,9 +124,6 @@
 
                         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-1">
                             <span>Aggiungi</span>
-                        </button>
-                        <button type="button" onclick="openModal('report-modal')" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm">
-                            <span>Report Capo</span>
                         </button>
                     </div>
 
@@ -169,13 +174,11 @@
                     </div>
                 </div>
 
-                <!-- SEZIONE INTEGRATA GOOGLE CALENDAR -->
+                <!-- SEZIONE GOOGLE CALENDAR -->
                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-6 shadow-sm space-y-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-3">
-                            <div class="bg-amber-500 text-white p-2 rounded-lg">
-                                <i data-lucide="calendar" class="w-5 h-5"></i>
-                            </div>
+                            <div class="bg-amber-500 text-white p-2 rounded-lg"><i data-lucide="calendar" class="w-5 h-5"></i></div>
                             <h3 class="font-bold text-amber-900 text-base">Agenda & Eventi Google Calendar di Oggi</h3>
                         </div>
                         <button onclick="fetchGoogleCalendarEvents()" class="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg font-medium transition">Sincronizza Ora</button>
@@ -185,16 +188,16 @@
                     </div>
                 </div>
 
-                <!-- CODA TASK CON FILTRI AVANZATI -->
+                <!-- CODA TASK CON FILTRI AVANZATI E RICERCA NOME -->
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
                     <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
                         <div class="flex items-center space-x-2">
                             <span class="font-bold text-gray-800">Coda di Lavorazione Tasks</span>
                             <span id="admin-view-indicator" class="text-xs font-normal text-blue-600 bg-blue-50 px-2 py-1 rounded hidden">Vista Totale Admin</span>
                         </div>
-                        <!-- BARRA FILTRI -->
-                        <div class="flex items-center space-x-3 text-xs">
-                            <span class="text-gray-400 font-medium">Filtra per:</span>
+                        <!-- RICERCA E FILTRI -->
+                        <div class="flex items-center space-x-3 text-xs flex-wrap gap-2">
+                            <input id="filter-search" type="text" oninput="renderTasks()" placeholder="Cerca task..." class="px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 outline-none w-40">
                             <select id="filter-project" onchange="renderTasks()" class="px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 font-medium outline-none">
                                 <option value="all">Tutti i Progetti</option>
                             </select>
@@ -213,6 +216,34 @@
                 </div>
             </div>
 
+            <!-- VISTA: KANBAN BOARD -->
+            <div id="tab-kanban" class="p-8 space-y-6 hidden">
+                <h2 class="text-2xl font-bold text-gray-900">Vista Kanban Board</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3">
+                        <div class="font-bold text-slate-700 text-sm flex justify-between items-center">
+                            <span>IN CORSO</span>
+                            <span id="kanban-count-in_corso" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="kanban-col-in_corso" class="space-y-3 min-h-[300px]"></div>
+                    </div>
+                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3">
+                        <div class="font-bold text-slate-700 text-sm flex justify-between items-center">
+                            <span>IN ATTESA</span>
+                            <span id="kanban-count-in_attesa" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="kanban-col-in_attesa" class="space-y-3 min-h-[300px]"></div>
+                    </div>
+                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3">
+                        <div class="font-bold text-slate-700 text-sm flex justify-between items-center">
+                            <span>COMPLETATI</span>
+                            <span id="kanban-count-completato" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="kanban-col-completato" class="space-y-3 min-h-[300px]"></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- VISTA: ALBERO PROGETTI & ATTIVITÀ -->
             <div id="tab-projects" class="p-8 space-y-6 hidden">
                 <h2 class="text-2xl font-bold text-gray-900">Struttura Progetti e Attività</h2>
@@ -223,9 +254,19 @@
 
             <!-- VISTA: GANTT -->
             <div id="tab-gantt" class="p-8 space-y-6 hidden">
-                <h2 class="text-2xl font-bold text-gray-900">Vista Gantt Semplificata</h2>
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <div id="gantt-container" class="space-y-3"></div>
+                <h2 class="text-2xl font-bold text-gray-900">Vista Gantt con Date di Schedulazione</h2>
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                    <div id="gantt-container" class="space-y-4"></div>
+                </div>
+            </div>
+
+            <!-- VISTA: REPORTING -->
+            <div id="tab-reporting" class="p-8 space-y-6 hidden">
+                <h2 class="text-2xl font-bold text-gray-900">Centro Reporting & Sintesi Lavoro</h2>
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4 max-w-2xl">
+                    <h3 class="font-bold text-gray-800 text-base">Sintesi Report per la Direzione</h3>
+                    <div id="report-page-content" class="bg-gray-50 p-4 rounded-lg text-xs font-mono text-gray-800 whitespace-pre-wrap border"></div>
+                    <button onclick="copyReport()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">Copia Report per Email</button>
                 </div>
             </div>
 
@@ -242,17 +283,38 @@
         </main>
     </div>
 
-    <!-- MODALE REPORT CAPO -->
-    <div id="report-modal" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4">
+    <!-- MODALE MODIFICA TASK -->
+    <div id="edit-task-modal" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-bold text-gray-900 text-lg">Sintesi Report Lavoro per il Capo</h3>
-                <button onclick="closeModal('report-modal')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x"></i></button>
+                <h3 class="font-bold text-gray-900 text-lg">Modifica Task</h3>
+                <button onclick="closeModal('edit-task-modal')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x"></i></button>
             </div>
-            <div class="bg-gray-50 p-4 rounded-lg text-xs font-mono text-gray-800 space-y-2 whitespace-pre-wrap" id="report-content"></div>
-            <div class="flex justify-end space-x-2 pt-2">
-                <button onclick="closeModal('report-modal')" class="px-4 py-2 border rounded-lg text-sm font-medium">Chiudi</button>
-                <button onclick="copyReport()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Copia per Email</button>
+            <input type="hidden" id="edit-task-id">
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Titolo Task</label>
+                    <input id="edit-task-title" type="text" class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-sm outline-none focus:bg-white focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Progetto</label>
+                    <input id="edit-task-project" type="text" class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-sm outline-none focus:bg-white focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Taglia Effort</label>
+                    <select id="edit-task-size" class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-sm outline-none">
+                        <option value="XS">XS</option>
+                        <option value="S">S</option>
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                        <option value="XXL">XXL</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-3 border-t">
+                <button onclick="closeModal('edit-task-modal')" class="px-4 py-2 border rounded-lg text-sm font-medium">Annulla</button>
+                <button onclick="saveTaskEdit()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Salva Modifiche</button>
             </div>
         </div>
     </div>
@@ -287,7 +349,7 @@
             if (btnGoogle) {
                 btnGoogle.addEventListener('click', async function() {
                     if (!supabaseClient) {
-                        alert("SUPABASE_ANON_KEY non trovata o non configurata nel file index.html!");
+                        alert("SUPABASE_ANON_KEY non configurata!");
                         return;
                     }
                     try {
@@ -298,11 +360,8 @@
                                 scopes: 'https://www.googleapis.com/auth/calendar.readonly'
                             }
                         });
-                        if (res.error) alert("Errore di login: " + res.error.message);
-                    } catch (e) {
-                        console.error(e);
-                        alert("Errore nell avviare la procedura di login.");
-                    }
+                        if (res.error) alert("Errore: " + res.error.message);
+                    } catch (e) { console.error(e); }
                 });
             }
         });
@@ -312,7 +371,7 @@
             
             if (!supabaseClient) {
                 document.getElementById('login-screen').classList.remove('hidden');
-                document.getElementById('login-error').innerText = "Incolla la tua Publishable Key nel file HTML!";
+                document.getElementById('login-error').innerText = "Incolla la tua Publishable Key!";
                 document.getElementById('login-error').classList.remove('hidden');
                 return;
             }
@@ -380,7 +439,7 @@
         async function fetchGoogleCalendarEvents() {
             const container = document.getElementById('calendar-events-list');
             if (!providerToken) {
-                container.innerHTML = '<p class="text-xs text-amber-700 py-2">Fai il re-login con Google per autorizzare la sincronizzazione del calendario.</p>';
+                container.innerHTML = '<p class="text-xs text-amber-700 py-2">Fai il re-login con Google per la sincronizzazione.</p>';
                 return;
             }
 
@@ -410,17 +469,15 @@
                             '<span class="bg-amber-200 text-amber-900 text-xs font-bold px-2 py-0.5 rounded">' + start + '</span>' +
                             '<span class="font-semibold text-xs">' + (ev.summary || 'Evento senza titolo') + '</span>' +
                         '</div>' +
-                        (ev.description ? '<span class="text-[11px] text-amber-700 truncate max-w-xs">' + ev.description + '</span>' : '') +
                     '</div>';
                 }).join('');
             } catch (err) {
-                container.innerHTML = '<p class="text-xs text-amber-800 py-2">Per la lettura in tempo reale dell agenda, abilita l API Google Calendar su GCP.</p>';
+                container.innerHTML = '<p class="text-xs text-amber-800 py-2">Abilita l API Google Calendar su GCP.</p>';
             }
         }
 
         async function loadTasksFromCloud() {
             let query = supabaseClient.from('tasks').select('*').order('created_at', { ascending: false });
-            
             if (currentProfile && currentProfile.role !== 'admin') {
                 query = query.eq('assigned_email', currentUser.email);
             }
@@ -430,9 +487,11 @@
                 tasksList = res.data;
                 populateProjectFilter();
                 renderTasks();
+                renderKanban();
                 updateCounters();
                 renderGantt();
                 renderProjectsTree();
+                renderReportingPage();
             }
         }
 
@@ -473,9 +532,8 @@
             loadTasksFromCloud();
         }
 
-        async function toggleTaskStatus(id, currentStatus) {
-            const nextStatus = currentStatus === 'completato' ? 'in_corso' : 'completato';
-            await supabaseClient.from('tasks').update({ status: nextStatus }).eq('id', id);
+        async function updateTaskStatus(id, newStatus) {
+            await supabaseClient.from('tasks').update({ status: newStatus }).eq('id', id);
             loadTasksFromCloud();
         }
 
@@ -484,19 +542,47 @@
             loadTasksFromCloud();
         }
 
+        function openEditModal(id) {
+            const task = tasksList.find(function(t) { return t.id === id; });
+            if (!task) return;
+            document.getElementById('edit-task-id').value = task.id;
+            document.getElementById('edit-task-title').value = task.title;
+            document.getElementById('edit-task-project').value = task.project || 'Generale';
+            document.getElementById('edit-task-size').value = task.size || 'M';
+            openModal('edit-task-modal');
+        }
+
+        async function saveTaskEdit() {
+            const id = document.getElementById('edit-task-id').value;
+            const title = document.getElementById('edit-task-title').value.trim();
+            const project = document.getElementById('edit-task-project').value.trim() || 'Generale';
+            const size = document.getElementById('edit-task-size').value;
+
+            await supabaseClient.from('tasks').update({
+                title: title,
+                project: project,
+                size: size
+            }).eq('id', id);
+
+            closeModal('edit-task-modal');
+            loadTasksFromCloud();
+        }
+
         function renderTasks() {
             const container = document.getElementById('tasks-container');
             if (!container) return;
             
+            const searchText = document.getElementById('filter-search') ? document.getElementById('filter-search').value.toLowerCase() : '';
             const projFilter = document.getElementById('filter-project') ? document.getElementById('filter-project').value : 'all';
             const sizeFilter = document.getElementById('filter-size') ? document.getElementById('filter-size').value : 'all';
 
             let filtered = tasksList;
+            if (searchText) filtered = filtered.filter(function(t) { return t.title.toLowerCase().includes(searchText); });
             if (projFilter !== 'all') filtered = filtered.filter(function(t) { return (t.project || 'Generale') === projFilter; });
             if (sizeFilter !== 'all') filtered = filtered.filter(function(t) { return (t.size || 'M') === sizeFilter; });
 
             if (filtered.length === 0) {
-                container.innerHTML = '<div class="p-8 text-center text-gray-400">Nessun task corrisponde ai filtri selezionati.</div>';
+                container.innerHTML = '<div class="p-8 text-center text-gray-400">Nessun task corrisponde ai criteri di ricerca.</div>';
                 return;
             }
 
@@ -509,7 +595,7 @@
 
                 return '<div class="p-4 flex items-center justify-between hover:bg-slate-50 transition">' +
                     '<div class="flex items-center space-x-3">' +
-                        '<input type="checkbox" ' + (t.status === 'completato' ? 'checked' : '') + ' onclick="toggleTaskStatus(\'' + t.id + '\', \'' + t.status + '\')" class="w-5 h-5 text-blue-600 rounded border-gray-300 cursor-pointer">' +
+                        '<input type="checkbox" ' + (t.status === 'completato' ? 'checked' : '') + ' onclick="updateTaskStatus(\'' + t.id + '\', \'' + (t.status === 'completato' ? 'in_corso' : 'completato') + '\')" class="w-5 h-5 text-blue-600 rounded border-gray-300 cursor-pointer">' +
                         '<div>' +
                             '<div class="flex items-center space-x-2">' +
                                 '<p class="font-medium ' + (t.status === 'completato' ? 'line-through text-gray-400' : 'text-gray-900') + '">' + t.title + '</p>' +
@@ -518,17 +604,48 @@
                             '<div class="flex items-center space-x-2 text-xs text-gray-500 mt-1">' +
                                 '<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium">' + (t.project || 'Generale') + '</span>' +
                                 typeBadges +
-                                (t.assigned_email ? '<span class="text-gray-400">• Assegnato a: ' + t.assigned_email + '</span>' : '') +
                             '</div>' +
                         '</div>' +
                     '</div>' +
                     '<div class="flex items-center space-x-2">' +
-                        '<span class="px-2.5 py-1 text-xs font-medium rounded-full ' + (t.status === 'completato' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700') + '">' + t.status + '</span>' +
-                        '<button onclick="deleteTask(\'' + t.id + '\')" class="text-gray-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>' +
+                        '<button onclick="openEditModal(\'' + t.id + '\')" class="text-gray-400 hover:text-blue-600 p-1" title="Modifica"><i data-lucide="pencil" class="w-4 h-4"></i></button>' +
+                        '<button onclick="deleteTask(\'' + t.id + '\')" class="text-gray-400 hover:text-red-500 p-1" title="Elimina"><i data-lucide="trash-2" class="w-4 h-4"></i></button>' +
                     '</div>' +
                 '</div>';
             }).join('');
             if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function renderKanban() {
+            const cols = ['in_corso', 'in_attesa', 'completato'];
+            cols.forEach(function(col) {
+                const container = document.getElementById('kanban-col-' + col);
+                const countBadge = document.getElementById('kanban-count-' + col);
+                if (!container) return;
+
+                const items = tasksList.filter(function(t) { return t.status === col; });
+                if (countBadge) countBadge.innerText = items.length;
+
+                if (items.length === 0) {
+                    container.innerHTML = '<p class="text-xs text-gray-400 p-3 text-center border border-dashed rounded-lg">Nessun task</p>';
+                    return;
+                }
+
+                container.innerHTML = items.map(function(t) {
+                    return '<div class="bg-white p-3 rounded-lg border shadow-sm space-y-2">' +
+                        '<div class="flex justify-between items-start">' +
+                            '<p class="text-sm font-semibold text-gray-800">' + t.title + '</p>' +
+                            '<span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-1.5 py-0.5 rounded">' + (t.size || 'M') + '</span>' +
+                        '</div>' +
+                        '<span class="inline-block bg-blue-100 text-blue-800 text-[10px] font-medium px-2 py-0.5 rounded">' + (t.project || 'Generale') + '</span>' +
+                        '<div class="flex justify-end space-x-1 pt-2 border-t text-xs">' +
+                            (col !== 'in_corso' ? '<button onclick="updateTaskStatus(\'' + t.id + '\', \'in_corso\')" class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded">In Corso</button>' : '') +
+                            (col !== 'in_attesa' ? '<button onclick="updateTaskStatus(\'' + t.id + '\', \'in_attesa\')" class="px-2 py-0.5 bg-amber-50 text-amber-600 rounded">Attesa</button>' : '') +
+                            (col !== 'completato' ? '<button onclick="updateTaskStatus(\'' + t.id + '\', \'completato\')" class="px-2 py-0.5 bg-green-50 text-green-600 rounded">Fatto</button>' : '') +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+            });
         }
 
         function renderProjectsTree() {
@@ -567,12 +684,6 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        function updateCounters() {
-            if (document.getElementById('count-in-corso')) document.getElementById('count-in-corso').innerText = tasksList.filter(function(t) { return t.status === 'in_corso'; }).length;
-            if (document.getElementById('count-in-attesa')) document.getElementById('count-in-attesa').innerText = tasksList.filter(function(t) { return t.status === 'in_attesa'; }).length;
-            if (document.getElementById('count-completati')) document.getElementById('count-completati').innerText = tasksList.filter(function(t) { return t.status === 'completato'; }).length;
-        }
-
         function renderGantt() {
             const container = document.getElementById('gantt-container');
             if (!container) return;
@@ -583,14 +694,40 @@
             }
 
             container.innerHTML = projects.map(function(p) {
-                const count = tasksList.filter(function(t) { return (t.project || 'Generale') === p; }).length;
-                return '<div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg border">' +
-                    '<span class="font-semibold text-sm">' + p + '</span>' +
-                    '<div class="w-2/3 bg-blue-200 h-4 rounded-full overflow-hidden">' +
-                        '<div class="bg-blue-600 h-full text-[10px] text-white font-bold text-center leading-none flex items-center justify-center" style="width: ' + Math.min(count * 25, 100) + '%">' + count + ' Task</div>' +
+                const projTasks = tasksList.filter(function(t) { return (t.project || 'Generale') === p; });
+                const count = projTasks.length;
+                const completedCount = projTasks.filter(function(t) { return t.status === 'completato'; }).length;
+                const pct = Math.round((completedCount / count) * 100) || 0;
+                
+                const dates = projTasks.map(function(t) { return new Date(t.created_at); }).filter(Boolean);
+                const minDate = dates.length ? new Date(Math.min.apply(null, dates)).toLocaleDateString() : 'N/D';
+                const maxDate = dates.length ? new Date(Math.max.apply(null, dates)).toLocaleDateString() : 'N/D';
+
+                return '<div class="bg-slate-50 p-4 rounded-xl border space-y-2">' +
+                    '<div class="flex justify-between items-center text-sm">' +
+                        '<span class="font-bold text-gray-800">' + p + '</span>' +
+                        '<span class="text-xs text-gray-500 font-mono">Avvio: ' + minDate + ' | Ultimo aggiornamento: ' + maxDate + '</span>' +
+                    '</div>' +
+                    '<div class="w-full bg-gray-200 h-5 rounded-full overflow-hidden flex items-center">' +
+                        '<div class="bg-blue-600 h-full text-[10px] text-white font-bold text-center leading-none flex items-center justify-center transition-all" style="width: ' + pct + '%">' + (pct > 10 ? pct + '%' : '') + '</div>' +
+                    '</div>' +
+                    '<div class="flex justify-between text-xs text-gray-500">' +
+                        '<span>Totale Task: ' + count + '</span>' +
+                        '<span>Completati: ' + completedCount + '/' + count + '</span>' +
                     '</div>' +
                 '</div>';
             }).join('');
+        }
+
+        function renderReportingPage() {
+            const el = document.getElementById('report-page-content');
+            if (el) el.innerText = generateReport();
+        }
+
+        function updateCounters() {
+            if (document.getElementById('count-in-corso')) document.getElementById('count-in-corso').innerText = tasksList.filter(function(t) { return t.status === 'in_corso'; }).length;
+            if (document.getElementById('count-in-attesa')) document.getElementById('count-in-attesa').innerText = tasksList.filter(function(t) { return t.status === 'in_attesa'; }).length;
+            if (document.getElementById('count-completati')) document.getElementById('count-completati').innerText = tasksList.filter(function(t) { return t.status === 'completato'; }).length;
         }
 
         async function loadAdminUsers() {
@@ -631,7 +768,7 @@
         }
 
         function switchTab(tabName) {
-            ['focus', 'projects', 'gantt', 'admin'].forEach(function(t) {
+            ['focus', 'kanban', 'projects', 'gantt', 'reporting', 'admin'].forEach(function(t) {
                 const el = document.getElementById('tab-' + t);
                 const nav = document.getElementById('nav-' + t);
                 if (el) el.classList.add('hidden');
@@ -645,15 +782,11 @@
             if (tabName === 'admin') loadAdminUsers();
         }
 
-        function openModal(id) { 
-            document.getElementById('report-content').innerText = generateReport();
-            document.getElementById(id).classList.remove('hidden'); 
-        }
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
         function copyReport() {
             navigator.clipboard.writeText(generateReport());
             alert('Report copiato negli appunti!');
-            closeModal('report-modal');
         }
     </script>
 </body>
