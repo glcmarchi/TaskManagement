@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Task & Admin Hub</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .sidebar-item-active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 antialiased">
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- SIDEBAR DI NAVIGAZIONE -->
+        <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between p-4 flex-shrink-0">
+            <div>
+                <!-- App Logo & Workspace -->
+                <div class="flex items-center space-x-3 mb-8 px-2">
+                    <div class="bg-blue-600 text-white p-2 rounded-lg">
+                        <i data-lucide="layers"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white text-lg leading-none">TaskNexus</h1>
+                        <span class="text-xs text-slate-400">Workspace: Azienda Srl</span>
+                    </div>
+                </div>
+
+                <!-- Navigazione Principale -->
+                <nav class="space-y-1">
+                    <button onclick="switchTab('focus')" id="nav-focus" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium sidebar-item-active">
+                        <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>Priorità Oggi</span>
+                    </button>
+                    <button onclick="switchTab('kanban')" id="nav-kanban" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
+                        <i data-lucide="kanban" class="w-5 h-5"></i>
+                        <span>Stato Task</span>
+                    </button>
+                    <button onclick="switchTab('gantt')" id="nav-gantt" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
+                        <i data-lucide="gantt-chart" class="w-5 h-5"></i>
+                        <span>Vista Gantt / Carico</span>
+                    </button>
+                    <button onclick="switchTab('calendar')" id="nav-calendar" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
+                        <i data-lucide="calendar" class="w-5 h-5"></i>
+                        <span>Google Calendar</span>
+                    </button>
+                </nav>
+
+                <hr class="border-slate-800 my-6">
+
+                <!-- Sezione Management / Admin -->
+                <div class="text-xs font-semibold text-slate-500 uppercase px-3 mb-2">Amministrazione</div>
+                <nav class="space-y-1">
+                    <button onclick="switchTab('admin')" id="nav-admin" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                        <span>Consola Admin</span>
+                        <span class="bg-amber-500 text-slate-900 text-xs px-2 py-0.5 rounded-full font-bold ml-auto">1</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Profile & Quick Logout -->
+            <div class="pt-4 border-t border-slate-800 flex items-center justify-between px-2">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold text-white text-sm">
+                        ME
+                    </div>
+                    <div class="text-xs">
+                        <p class="font-medium text-white">Mario Rossi</p>
+                        <p class="text-slate-400">Admin</p>
+                    </div>
+                </div>
+                <button class="text-slate-400 hover:text-white">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- AREA CONTENUTO PRINCIPALE -->
+        <main class="flex-1 bg-slate-50 flex flex-col overflow-y-auto">
+            
+            <!-- TOP BAR -->
+            <header class="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
+                <div class="flex items-center space-x-4 flex-1 max-w-xl">
+                    <!-- Quick Data Entry Task Input -->
+                    <div class="relative w-full">
+                        <i data-lucide="plus-circle" class="w-5 h-5 absolute left-3 top-2.5 text-gray-400"></i>
+                        <input type="text" placeholder="Inserisci rapidamente un nuovo task e premi Invio..." class="w-full pl-10 pr-4 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-sm outline-none transition">
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <!-- Genera Report Capo Button -->
+                    <button onclick="openModal('report-modal')" class="flex items-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm">
+                        <i data-lucide="file-text" class="w-4 h-4"></i>
+                        <span>Report per Capo</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- VISTA 1: PRIORITÀ OGGI (FOCUS) -->
+            <div id="tab-focus" class="p-8 space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">Cosa devo fare Oggi?</h2>
+                    <p class="text-gray-500 text-sm">Visualizzazione ultrarapida per evitare la saturazione e mantenere il controllo.</p>
+                </div>
+
+                <!-- Card Riepilogo Rapido -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-red-500">
+                        <div class="text-xs font-semibold text-gray-400 uppercase">Urgenti / In Scadenza</div>
+                        <div class="text-3xl font-bold text-gray-900 mt-1">3 Task</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-amber-500">
+                        <div class="text-xs font-semibold text-gray-400 uppercase">In Attesa da Altri</div>
+                        <div class="text-3xl font-bold text-gray-900 mt-1">2 Bloccati</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-green-500">
+                        <div class="text-xs font-semibold text-gray-400 uppercase">Completati Settimana</div>
+                        <div class="text-3xl font-bold text-gray-900 mt-1">12 Task</div>
+                    </div>
+                </div>
+
+                <!-- Lista Task Prioritari -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800">In Coda di Lavorazione Personale</h3>
+                        <span class="text-xs bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full font-medium">Priorità Alta</span>
+                    </div>
+                    <div class="divide-y divide-gray-100">
+                        <!-- Single Task Row -->
+                        <div class="p-4 flex items-center justify-between hover:bg-slate-50">
+                            <div class="flex items-center space-x-3">
+                                <input type="checkbox" class="w-5 h-5 text-blue-600 rounded border-gray-300">
+                                <div>
+                                    <p class="font-medium text-gray-900">Inviare specifica tecnica Forama</p>
+                                    <div class="flex items-center space-x-2 text-xs text-gray-500 mt-0.5">
+                                        <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-medium">Progetto Forama</span>
+                                        <span>• Scadenza: Oggi, 17:00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">In corso</span>
+                        </div>
+                        <!-- Single Task Row -->
+                        <div class="p-4 flex items-center justify-between hover:bg-slate-50">
+                            <div class="flex items-center space-x-3">
+                                <input type="checkbox" class="w-5 h-5 text-blue-600 rounded border-gray-300">
+                                <div>
+                                    <p class="font-medium text-gray-900">Verifica avanzamento lavoro collaboratore (Luca)</p>
+                                    <div class="flex items-center space-x-2 text-xs text-gray-500 mt-0.5">
+                                        <span class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-medium">Gestione Team</span>
+                                        <span>• Assegnato a: Luca M.</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">In attesa</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA 2: GANTT SEMPLIFICATO -->
+            <div id="tab-gantt" class="p-8 space-y-6 hidden">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">Gantt Semplificato & Disponibilità</h2>
+                    <p class="text-gray-500 text-sm">Pianifica le attività nella settimana per dimostrare visivamente la saturazione al tuo capo.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+                    <div class="min-w-[700px]">
+                        <!-- Timeline Header -->
+                        <div class="grid grid-cols-6 gap-2 mb-4 font-bold text-xs uppercase text-gray-500 text-center border-b pb-2">
+                            <div class="text-left">Task / Progetto</div>
+                            <div>Lun</div>
+                            <div>Mar</div>
+                            <div>Mer</div>
+                            <div>Gio</div>
+                            <div>Ven</div>
+                        </div>
+
+                        <!-- Row 1 -->
+                        <div class="grid grid-cols-6 gap-2 items-center py-3 border-b text-sm">
+                            <div class="font-medium text-gray-900 truncate">Progetto Forama</div>
+                            <div class="col-span-2 bg-blue-500 text-white text-xs p-2 rounded text-center font-medium truncate">Sviluppo Specifica</div>
+                            <div class="col-span-1 bg-amber-400 text-slate-900 text-xs p-2 rounded text-center font-medium truncate">Review Capo</div>
+                            <div class="col-span-2 text-center text-xs text-gray-400">--</div>
+                        </div>
+
+                        <!-- Row 2 -->
+                        <div class="grid grid-cols-6 gap-2 items-center py-3 border-b text-sm">
+                            <div class="font-medium text-gray-900 truncate">Sito Web Interno</div>
+                            <div class="col-span-1 text-center text-xs text-gray-400">--</div>
+                            <div class="col-span-3 bg-emerald-500 text-white text-xs p-2 rounded text-center font-medium truncate">Configurazione Server & Database</div>
+                            <div class="col-span-1 text-center text-xs text-gray-400">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA 3: CONSOLA ADMIN (GESTIONE ACCESSI E PERMESSI) -->
+            <div id="tab-admin" class="p-8 space-y-6 hidden">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">Consola Amministrazione Workspace</h2>
+                    <p class="text-gray-500 text-sm">Gestisci le richieste di accesso e assegna i permessi agli utenti registrati.</p>
+                </div>
+
+                <!-- Richieste in Attesa -->
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-6">
+                    <h3 class="font-bold text-amber-900 flex items-center space-x-2 mb-2">
+                        <i data-lucide="user-plus" class="w-5 h-5 text-amber-600"></i>
+                        <span>Richieste di Registrazione in Attesa (1)</span>
+                    </h3>
+                    <p class="text-xs text-amber-700 mb-4">Un utente si è registrato col suo account Google al tuo link. Approvalo per dargli accesso.</p>
+                    
+                    <div class="bg-white rounded-lg border border-amber-200 p-4 flex items-center justify-between">
+                        <div>
+                            <p class="font-medium text-gray-900">giuseppe.collaboratore@gmail.com</p>
+                            <p class="text-xs text-gray-500">Richiesta inviata: Oggi, 08:30</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition">Approva Accesso</button>
+                            <button class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold rounded-lg transition">Rifiuta</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabella Utenti e Permessi -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 font-bold text-gray-800">
+                        Membri del Workspace & Permessi
+                    </div>
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-gray-50 text-xs uppercase text-gray-500 border-b">
+                                <th class="p-4">Utente</th>
+                                <th class="p-4">Ruolo</th>
+                                <th class="p-4">Visibilità Task</th>
+                                <th class="p-4">Azienda / Workspace</th>
+                                <th class="p-4 text-right">Aziologia</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <tr>
+                                <td class="p-4 font-medium text-gray-900">Mario Rossi (Tu)</td>
+                                <td class="p-4"><span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded">Super Admin</span></td>
+                                <td class="p-4 text-gray-500">Tutti i Task + Task Collaboratori</td>
+                                <td class="p-4 text-gray-500">Azienda Srl</td>
+                                <td class="p-4 text-right text-gray-400">Proprietario</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-medium text-gray-900">Luca Bianchi (Collaboratore)</td>
+                                <td class="p-4"><span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded">Membro</span></td>
+                                <td class="p-4 text-gray-500">Solo Task Assegnati</td>
+                                <td class="p-4 text-gray-500">Azienda Srl</td>
+                                <td class="p-4 text-right">
+                                    <button class="text-blue-600 text-xs hover:underline font-medium">Modifica Permessi</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VISTE KANBAN E CALENDAR (PLACEHOLDER) -->
+            <div id="tab-kanban" class="p-8 hidden"><h2 class="text-xl font-bold">Vista Stato Kanban (In arrivo)</h2></div>
+            <div id="tab-calendar" class="p-8 hidden"><h2 class="text-xl font-bold">Integrazione Google Calendar (In arrivo)</h2></div>
+
+        </main>
+    </div>
+
+    <!-- MODALE REPORT PER CAPO -->
+    <div id="report-modal" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-gray-900 text-lg">Sintesi Report Lavoro per il Capo</h3>
+                <button onclick="closeModal('report-modal')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x"></i></button>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg text-xs font-mono text-gray-800 space-y-2">
+                <p class="font-bold">OGGETTO: Aggiornamento Settimanale Attività & Stato Avanzamento</p>
+                <p>Ecco il riepilogo delle attività svolte e in corso questa settimana:</p>
+                <ul class="list-disc pl-4 space-y-1">
+                    <li><strong>Progetto Forama:</strong> Specifica completata (12 ore dedicate via Calendar).</li>
+                    <li><strong>Task Collaboratore (Luca):</strong> Completati 4 task di supporto.</li>
+                    <li><strong>Prossime Priorità:</strong> Revisione contratti e kickoff sito web.</li>
+                </ul>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeModal('report-modal')" class="px-4 py-2 border rounded-lg text-sm font-medium">Chiudi</button>
+                <button onclick="alert('Report copiato negli appunti!'); closeModal('report-modal');" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Copia Testo per Email</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inizializza Icone Lucide
+        lucide.createIcons();
+
+        // Switcher Tab Navigazione
+        function switchTab(tabName) {
+            const tabs = ['focus', 'kanban', 'gantt', 'calendar', 'admin'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).classList.remove('sidebar-item-active');
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabName}`).classList.add('sidebar-item-active');
+        }
+
+        // Modale
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    </script>
+</body>
+</html>
