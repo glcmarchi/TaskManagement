@@ -172,7 +172,6 @@
                     <p class="text-gray-500 text-sm">Dashboard personale e dei task assegnati sincronizzata in Cloud.</p>
                 </div>
 
-                <!-- 4 SCHEDE CONTATORE (INCLUSO "IN RITARDO") -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-blue-500">
                         <div class="text-xs font-semibold text-gray-400 uppercase">In Corso</div>
@@ -263,12 +262,12 @@
                 </div>
             </div>
 
-            <!-- VISTA: PROGRAMMA SETTIMANALE REALETIME CON DATE E NUMERO SETTIMANA -->
+            <!-- VISTA: PROGRAMMA SETTIMANALE REALETIME CON DATE E NUOVO PULSANTE AGGIUNGI TASK -->
             <div id="tab-program" class="p-8 space-y-6 hidden">
                 <div class="flex justify-between items-center">
                     <div>
                         <h2 class="text-2xl font-bold text-gray-900">Programma Settimanale Attività</h2>
-                        <p class="text-gray-500 text-sm">Organizza le attività trascinandole nelle finestre settimanali reali.</p>
+                        <p class="text-gray-500 text-sm">Pianifica le attività trascinandole o aggiungendole direttamente nella settimana target.</p>
                     </div>
                 </div>
                 <div id="program-weeks-container" class="space-y-6"></div>
@@ -371,6 +370,42 @@
         </div>
     </div>
 
+    <!-- MODALE RAPIDO INSERIMENTO TASK IN SETTIMANA SPECIFICA -->
+    <div id="add-week-task-modal" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-gray-900 text-lg">Aggiungi Task in <span id="target-week-label" class="text-blue-600"></span></h3>
+                <button onclick="closeModal('add-week-task-modal')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x"></i></button>
+            </div>
+            <input type="hidden" id="target-week-num">
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Titolo Task</label>
+                    <input id="week-task-title" type="text" placeholder="Nome dell'attività..." class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-sm outline-none focus:bg-white focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Progetto</label>
+                    <input id="week-task-project" type="text" placeholder="Generale" class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-sm outline-none focus:bg-white focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Taglia Effort</label>
+                    <select id="week-task-size" class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-sm outline-none">
+                        <option value="S">S</option>
+                        <option value="XS">XS</option>
+                        <option value="M" selected>M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                        <option value="XXL">XXL</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-3 border-t">
+                <button onclick="closeModal('add-week-task-modal')" class="px-4 py-2 border rounded-lg text-sm font-medium">Annulla</button>
+                <button onclick="saveWeekTask()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Aggiungi alla Settimana</button>
+            </div>
+        </div>
+    </div>
+
     <!-- LOGICA JS COMPLETA -->
     <script>
         const SUPABASE_URL = "https://fpnetrdboqanxfeemajg.supabase.co";
@@ -396,7 +431,26 @@
             testing: { icon: 'flask-conical', label: 'Testing' }
         };
 
-        // CALCOLO DEADLINE ED EVIDENZIAZIONE COLORI (ROSSO, ARANCIONE, VERDE)
+        // CALCOLO ISO WEEK E RANGE DATE LUN-VEN
+        function getISOWeekInfo(dateObj) {
+            const date = new Date(dateObj.getTime());
+            date.setHours(0,0,0,0);
+            date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+            const week1 = new Date(date.getFullYear(), 0, 4);
+            const weekNum = 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+
+            const curr = new Date(dateObj);
+            const first = curr.getDate() - curr.getDay() + 1;
+            const monday = new Date(curr.setDate(first));
+            const friday = new Date(curr.setDate(first + 4));
+
+            const options = { month: 'short', day: 'numeric' };
+            const rangeStr = monday.toLocaleDateString('it-IT', options) + ' - ' + friday.toLocaleDateString('it-IT', options);
+
+            return { weekNum: weekNum, rangeStr: rangeStr };
+        }
+
+        // BADGE DEADLINE CON COLORI
         function getDeadlineBadge(deadlineStr) {
             if (!deadlineStr) return '';
             const today = new Date();
@@ -404,11 +458,11 @@
             const dDate = new Date(deadlineStr);
             const diffDays = Math.ceil((dDate - today) / (1000 * 60 * 60 * 24));
 
-            let colorClass = "bg-green-100 text-green-800 border-green-200"; // > 7 giorni
+            let colorClass = "bg-green-100 text-green-800 border-green-200";
             if (diffDays < 0) {
-                colorClass = "bg-red-100 text-red-800 border-red-200 font-bold"; // Scaduto
+                colorClass = "bg-red-100 text-red-800 border-red-200 font-bold";
             } else if (diffDays <= 7) {
-                colorClass = "bg-amber-100 text-amber-800 border-amber-200 font-bold"; // Entro 7 giorni
+                colorClass = "bg-amber-100 text-amber-800 border-amber-200 font-bold";
             }
 
             return `<span class="${colorClass} border px-2 py-0.5 rounded text-[11px] inline-flex items-center space-x-1">
@@ -581,10 +635,16 @@
 
             if (!titleInput.value.trim()) return;
 
+            let weekNum = null;
+            if (deadlineInput.value) {
+                weekNum = getISOWeekInfo(new Date(deadlineInput.value)).weekNum;
+            }
+
             const newObj = {
                 title: titleInput.value.trim(),
                 project: projectInput.value.trim() || 'Generale',
                 deadline: deadlineInput.value || null,
+                week: weekNum,
                 status: 'in_corso',
                 size: sizeInput.value,
                 types: selectedTypes,
@@ -598,6 +658,35 @@
                 const el = document.getElementById('tag-' + t);
                 if (el) el.classList.remove('type-btn-active');
             });
+            loadTasksFromCloud();
+        }
+
+        function openAddWeekModal(weekNum) {
+            document.getElementById('target-week-num').value = weekNum;
+            document.getElementById('target-week-label').innerText = 'Settimana ' + weekNum;
+            document.getElementById('week-task-title').value = '';
+            document.getElementById('week-task-project').value = '';
+            openModal('add-week-task-modal');
+        }
+
+        async function saveWeekTask() {
+            const weekNum = parseInt(document.getElementById('target-week-num').value);
+            const title = document.getElementById('week-task-title').value.trim();
+            const project = document.getElementById('week-task-project').value.trim() || 'Generale';
+            const size = document.getElementById('week-task-size').value;
+
+            if (!title) return;
+
+            await supabaseClient.from('tasks').insert([{
+                title: title,
+                project: project,
+                size: size,
+                week: weekNum,
+                status: 'in_corso',
+                assigned_email: currentUser.email
+            }]);
+
+            closeModal('add-week-task-modal');
             loadTasksFromCloud();
         }
 
@@ -629,7 +718,12 @@
             const deadline = document.getElementById('edit-task-deadline').value || null;
             const size = document.getElementById('edit-task-size').value;
 
-            await supabaseClient.from('tasks').update({ title: title, project: project, deadline: deadline, size: size }).eq('id', id);
+            let weekNum = null;
+            if (deadline) {
+                weekNum = getISOWeekInfo(new Date(deadline)).weekNum;
+            }
+
+            await supabaseClient.from('tasks').update({ title: title, project: project, deadline: deadline, week: weekNum, size: size }).eq('id', id);
             closeModal('edit-task-modal');
             loadTasksFromCloud();
         }
@@ -713,26 +807,6 @@
             });
         }
 
-        // CALCOLO ISO WEEK E RANGE DATE LUN-VEN
-        function getISOWeekInfo(dateObj) {
-            const date = new Date(dateObj.getTime());
-            date.setHours(0,0,0,0);
-            date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-            const week1 = new Date(date.getFullYear(), 0, 4);
-            const weekNum = 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-
-            // Calcola data Lunedì e Venerdì
-            const curr = new Date(dateObj);
-            const first = curr.getDate() - curr.getDay() + 1;
-            const monday = new Date(curr.setDate(first));
-            const friday = new Date(curr.setDate(first + 4));
-
-            const options = { month: 'short', day: 'numeric' };
-            const rangeStr = monday.toLocaleDateString('it-IT', options) + ' - ' + friday.toLocaleDateString('it-IT', options);
-
-            return { weekNum: weekNum, rangeStr: rangeStr };
-        }
-
         function renderProgram() {
             const container = document.getElementById('program-weeks-container');
             if (!container) return;
@@ -745,7 +819,14 @@
             }
 
             container.innerHTML = weeksData.map(function(wInfo) {
-                const wTasks = tasksList.filter(function(t) { return t.week == wInfo.weekNum; });
+                // Assegnazione automatica: se il task ha una deadline o una week impostata per questa settimana
+                const wTasks = tasksList.filter(function(t) { 
+                    if (t.deadline) {
+                        return getISOWeekInfo(new Date(t.deadline)).weekNum == wInfo.weekNum;
+                    }
+                    return t.week == wInfo.weekNum; 
+                });
+
                 const taskItems = wTasks.map(function(t) {
                     return '<div draggable="true" ondragstart="handleDragStart(event, \'' + t.id + '\')" class="bg-white p-3 rounded-lg border shadow-sm flex justify-between items-center cursor-grab">' +
                         '<div>' +
@@ -765,10 +846,15 @@
                             '<h3 class="font-bold text-gray-800 text-base">Settimana ' + wInfo.weekNum + '</h3>' +
                             '<p class="text-xs text-blue-600 font-medium">Lunedì - Venerdì: ' + wInfo.rangeStr + '</p>' +
                         '</div>' +
-                        '<span class="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full font-bold">' + wTasks.length + ' Task Pianificati</span>' +
+                        '<div class="flex items-center space-x-3">' +
+                            '<span class="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full font-bold">' + wTasks.length + ' Task</span>' +
+                            '<button onclick="openAddWeekModal(' + wInfo.weekNum + ')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-medium transition flex items-center space-x-1">' +
+                                '<span>+ Aggiungi Task</span>' +
+                            '</button>' +
+                        '</div>' +
                     '</div>' +
                     '<div class="space-y-2 min-h-[80px] bg-slate-50 p-3 rounded-lg border border-dashed border-gray-200">' +
-                        (taskItems || '<p class="text-xs text-gray-400 text-center py-2">Trascina un task qui per assegnarlo a questa settimana</p>') +
+                        (taskItems || '<p class="text-xs text-gray-400 text-center py-2">Trascina un task qui o usa "+ Aggiungi Task"</p>') +
                     '</div>' +
                 '</div>';
             }).join('');
@@ -820,7 +906,12 @@
             if (type === 'next') targetDate.setDate(now.getDate() + 7);
 
             const wInfo = getISOWeekInfo(targetDate);
-            const wTasks = tasksList.filter(function(t) { return t.week == wInfo.weekNum; });
+            const wTasks = tasksList.filter(function(t) { 
+                if (t.deadline) {
+                    return getISOWeekInfo(new Date(t.deadline)).weekNum == wInfo.weekNum;
+                }
+                return t.week == wInfo.weekNum; 
+            });
 
             printArea.innerHTML = '<div class="p-6 space-y-4">' +
                 '<div class="border-b pb-4 flex justify-between items-center">' +
@@ -835,7 +926,7 @@
                         return '<div class="p-3 border rounded-lg flex justify-between items-center">' +
                             '<div>' +
                                 '<p class="font-bold text-base">' + t.title + '</p>' +
-                                '<p class="text-xs text-gray-500">Progetto: ' + (t.project || 'Generale') + ' | Stato: ' + t.status + '</p>' +
+                                '<p class="text-xs text-gray-500">Progetto: ' + (t.project || 'Generale') + ' | Stato: ' + t.status + (t.deadline ? ' | Deadline: ' + t.deadline : '') + '</p>' +
                             '</div>' +
                             '<span class="font-bold border px-2 py-1 rounded">Taglia: ' + (t.size || 'M') + '</span>' +
                         '</div>';
