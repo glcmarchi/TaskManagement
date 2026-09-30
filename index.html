@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Task & Admin Hub (v1.0)</title>
+    <title>Nexus Task & Admin Hub (v1.1)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -30,7 +30,7 @@
             </div>
             <div class="flex items-center justify-center space-x-2">
                 <h2 class="text-2xl font-bold text-gray-900">TaskNexus Workspace</h2>
-                <span class="bg-blue-100 text-blue-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full">v1.0</span>
+                <span class="bg-blue-100 text-blue-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full">v1.1</span>
             </div>
             <p class="text-sm text-gray-500">Accedi con il tuo account Google per gestire i tuoi task e collaborare in sicurezza.</p>
             
@@ -62,7 +62,7 @@
             <div class="flex items-center space-x-2">
                 <div class="bg-blue-600 text-white p-1.5 rounded-lg"><i data-lucide="layers" class="w-5 h-5"></i></div>
                 <span class="font-bold text-base">TaskNexus</span>
-                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">v1.0</span>
+                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">v1.1</span>
             </div>
             <button onclick="toggleMobileMenu()" class="p-2 text-slate-300 hover:text-white focus:outline-none">
                 <i data-lucide="menu" class="w-6 h-6"></i>
@@ -78,7 +78,7 @@
                         <div>
                             <div class="flex items-center space-x-1.5">
                                 <h1 class="font-bold text-white text-lg leading-none">TaskNexus</h1>
-                                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded">v1.0</span>
+                                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded">v1.1</span>
                             </div>
                             <span class="text-xs text-slate-400" id="workspace-label">Workspace Attivo</span>
                         </div>
@@ -224,7 +224,7 @@
                     </div>
                 </div>
 
-                <!-- CODA TASK CON FILTRI INCLUSO CANALE/TIPO -->
+                <!-- CODA TASK CON FILTRI -->
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
                     <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div class="flex items-center space-x-2">
@@ -414,7 +414,7 @@
         </div>
     </div>
 
-    <!-- LOGICA JS COMPLETA -->
+    <!-- LOGICA JS COMPLETA PERMESSI V1.1 -->
     <script>
         const SUPABASE_URL = "https://fpnetrdboqanxfeemajg.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_2H6o6gTA4lBy4RlG50p1eQ_iPp03lY6";
@@ -672,15 +672,17 @@
             loadTasksFromCloud();
         }
 
-        // MOSTRA TUTTI I TASK LIBERI SENZA LIMITI RIGIDI
+        // MOSTRA TUTTI I TASK CHE NON HANNO UNA SETTIMANA ASSEGNATA (Versione v1.1 ultra-permissiva)
         function openAssignWeekModal(weekNum) {
             document.getElementById('assign-week-num').value = weekNum;
             document.getElementById('assign-week-label').innerText = 'Settimana ' + weekNum;
 
             const select = document.getElementById('unassigned-task-select');
 
+            // CONTROLLO PERMISSIVO: accetta se week è null, undefined, 0 o stringa vuota
             const unassigned = tasksList.filter(function(t) {
-                return !t.week || t.week == 0 || t.week == "0";
+                const w = t.week;
+                return (w === null || w === undefined || w === 0 || w === "0" || w === "");
             });
 
             if (unassigned.length === 0) {
@@ -707,7 +709,8 @@
         }
 
         async function moveTaskToWeek(taskId, newWeek) {
-            await supabaseClient.from('tasks').update({ week: newWeek }).eq('id', taskId);
+            const val = (newWeek === 0 || newWeek === '0') ? null : parseInt(newWeek);
+            await supabaseClient.from('tasks').update({ week: val }).eq('id', taskId);
             await loadTasksFromCloud();
         }
 
@@ -851,6 +854,7 @@
             });
         }
 
+        // RENDERING PROGRAMMA SETTIMANALE CON MENU SPOSTAMENTO DIRETTO
         function renderProgram() {
             const container = document.getElementById('program-weeks-container');
             if (!container) return;
@@ -862,7 +866,7 @@
                 weeksData.push(getISOWeekInfo(targetDate));
             }
 
-            container.innerHTML = weeksData.map(function(wInfo, idx) {
+            container.innerHTML = weeksData.map(function(wInfo) {
                 const wTasks = tasksList.filter(function(t) { 
                     if (t.deadline) {
                         return getISOWeekInfo(new Date(t.deadline)).weekNum == wInfo.weekNum;
@@ -875,7 +879,11 @@
                     const bgClass = isCompleted ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200';
                     const statusBadge = isCompleted ? '<span class="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">FATTO</span>' : '<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">IN CORSO</span>';
 
-                    const nextWeekNum = weeksData[idx + 1] ? weeksData[idx + 1].weekNum : (wInfo.weekNum + 1);
+                    // Genera le opzioni per spostare il task direttamente
+                    const weekOptions = weeksData.map(function(wk) {
+                        const sel = wk.weekNum == wInfo.weekNum ? 'selected' : '';
+                        return '<option value="' + wk.weekNum + '" ' + sel + '>Sett. ' + wk.weekNum + '</option>';
+                    }).join('');
 
                     return '<div class="' + bgClass + ' p-3 rounded-lg border shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">' +
                         '<div class="flex items-center space-x-2 truncate">' +
@@ -886,9 +894,14 @@
                             statusBadge +
                             getDeadlineBadge(t.deadline) +
                             '<span class="bg-purple-100 text-purple-800 text-xs font-bold px-2 py-0.5 rounded">' + (t.size || 'M') + '</span>' +
+                            
+                            '<!-- SELECT DI SPOSTAMENTO RAPIDO TRA SETTIMANE -->' +
                             '<div class="flex items-center space-x-1 pl-2 border-l">' +
-                                '<button onclick="moveTaskToWeek(\'' + t.id + '\', ' + nextWeekNum + ')" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded" title="Sposta alla settimana successiva">➡</button>' +
-                                '<button onclick="removeTaskFromWeek(\'' + t.id + '\')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1 rounded" title="Rimuovi da questa settimana">❌</button>' +
+                                '<select onchange="moveTaskToWeek(\'' + t.id + '\', this.value)" class="text-xs bg-gray-100 border border-gray-300 rounded px-1.5 py-1 text-gray-700 font-medium outline-none cursor-pointer">' +
+                                    '<option value="0">--- Sposta ---</option>' +
+                                    weekOptions +
+                                '</select>' +
+                                '<button onclick="removeTaskFromWeek(\'' + t.id + '\')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1 rounded font-bold" title="Rimuovi da questa settimana">❌</button>' +
                             '</div>' +
                         '</div>' +
                     '</div>';
@@ -902,7 +915,7 @@
                         '</div>' +
                         '<div class="flex items-center justify-between w-full sm:w-auto space-x-3">' +
                             '<span class="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full font-bold">' + wTasks.length + ' Task</span>' +
-                            '<button onclick="openAssignWeekModal(' + wInfo.weekNum + ')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-medium transition flex items-center space-x-1">' +
+                            '<button onclick="openAssignWeekModal(' + wInfo.weekNum + ')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-medium transition flex items-center space-x-1 active:scale-95">' +
                                 '<span>+ Assegna Task</span>' +
                             '</button>' +
                         '</div>' +
@@ -973,7 +986,7 @@
                         '<h1 class="text-2xl font-bold">Programma Lavorativo Settimanale</h1>' +
                         '<p class="text-sm text-gray-600">Settimana N. ' + wInfo.weekNum + ' (' + wInfo.rangeStr + ')</p>' +
                     '</div>' +
-                    '<p class="text-xs text-gray-400">TaskNexus Studio v1.0</p>' +
+                    '<p class="text-xs text-gray-400">TaskNexus Studio v1.1</p>' +
                 '</div>' +
                 '<div class="space-y-3 pt-4">' +
                     (wTasks.map(function(t) {
