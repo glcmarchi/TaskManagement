@@ -207,7 +207,7 @@
                     </div>
                 </div>
 
-                <!-- CODA TASK CON FILTRI -->
+                <!-- CODA TASK CON FILTRI INCLUSO CANALE/TIPO -->
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
                     <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
                         <div class="flex items-center space-x-2">
@@ -215,10 +215,23 @@
                             <span id="admin-view-indicator" class="text-xs font-normal text-blue-600 bg-blue-50 px-2 py-1 rounded hidden">Vista Totale Admin</span>
                         </div>
                         <div class="flex items-center space-x-3 text-xs flex-wrap gap-2">
-                            <input id="filter-search" type="text" oninput="renderTasks()" placeholder="Cerca task..." class="px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 outline-none w-40">
+                            <input id="filter-search" type="text" oninput="renderTasks()" placeholder="Cerca task..." class="px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 outline-none w-36">
+                            
+                            <!-- FILTRO CANALE / TIPO -->
+                            <select id="filter-type" onchange="renderTasks()" class="px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 font-medium outline-none">
+                                <option value="all">Tutti i Canali/Tipi</option>
+                                <option value="telefono">Telefono</option>
+                                <option value="mail">Mail</option>
+                                <option value="supermail">Supermail</option>
+                                <option value="meeting">Meeting</option>
+                                <option value="studio">Studio/Analisi</option>
+                                <option value="testing">Testing</option>
+                            </select>
+
                             <select id="filter-project" onchange="renderTasks()" class="px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 font-medium outline-none">
                                 <option value="all">Tutti i Progetti</option>
                             </select>
+                            
                             <select id="filter-size" onchange="renderTasks()" class="px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 font-medium outline-none">
                                 <option value="all">Tutte le Taglie</option>
                                 <option value="XS">XS</option>
@@ -262,7 +275,7 @@
                 </div>
             </div>
 
-            <!-- VISTA: PROGRAMMA SETTIMANALE REALETIME CON DRAG & DROP E STATO VERDE -->
+            <!-- VISTA: PROGRAMMA SETTIMANALE REALETIME CON DRAG & DROP PERFETTO -->
             <div id="tab-program" class="p-8 space-y-6 hidden">
                 <div class="flex justify-between items-center">
                     <div>
@@ -330,7 +343,7 @@
         </main>
     </div>
 
-    <!-- MODALE MODIFICA TASK -->
+    <!-- MODALE MODIFICA TASK INCLUSO SELETTORE CANALE/TIPO -->
     <div id="edit-task-modal" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center hidden z-50">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
             <div class="flex justify-between items-center border-b pb-3">
@@ -362,6 +375,17 @@
                         <option value="XXL">XXL</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Canali / Tipologie (Seleziona per attivare)</label>
+                    <div class="flex flex-wrap gap-1.5 pt-1 text-xs">
+                        <button type="button" onclick="toggleEditTypeTag('telefono')" id="edit-tag-telefono" class="px-2 py-1 rounded border text-gray-600">Telefono</button>
+                        <button type="button" onclick="toggleEditTypeTag('mail')" id="edit-tag-mail" class="px-2 py-1 rounded border text-gray-600">Mail</button>
+                        <button type="button" onclick="toggleEditTypeTag('supermail')" id="edit-tag-supermail" class="px-2 py-1 rounded border text-gray-600">Supermail</button>
+                        <button type="button" onclick="toggleEditTypeTag('meeting')" id="edit-tag-meeting" class="px-2 py-1 rounded border text-gray-600">Meeting</button>
+                        <button type="button" onclick="toggleEditTypeTag('studio')" id="edit-tag-studio" class="px-2 py-1 rounded border text-gray-600">Studio/Analisi</button>
+                        <button type="button" onclick="toggleEditTypeTag('testing')" id="edit-tag-testing" class="px-2 py-1 rounded border text-gray-600">Testing</button>
+                    </div>
+                </div>
             </div>
             <div class="flex justify-end space-x-2 pt-3 border-t">
                 <button onclick="closeModal('edit-task-modal')" class="px-4 py-2 border rounded-lg text-sm font-medium">Annulla</button>
@@ -380,7 +404,7 @@
             <input type="hidden" id="assign-week-num">
             <div class="space-y-3">
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Seleziona un'attività tra quelle non assegnate:</label>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Seleziona un'attività tra quelle non ancora assegnate:</label>
                     <select id="unassigned-task-select" class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-sm outline-none focus:bg-white focus:border-blue-500 font-medium">
                         <!-- Popolato via JS con i task non ancora assegnati -->
                     </select>
@@ -408,6 +432,8 @@
         let providerToken = null;
         let tasksList = [];
         let selectedTypes = [];
+        let editSelectedTypes = [];
+        let draggedTaskId = null; // Variabile globale per garantire il Drag & Drop
 
         const typeIcons = {
             telefono: { icon: 'phone', label: 'Telefono' },
@@ -457,22 +483,29 @@
             </span>`;
         }
 
-        // DRAG & DROP REALE CON RICARICAMENTO
+        // GESTIONE DRAG & DROP REALE GARANTITA
         function allowDrop(ev) { ev.preventDefault(); if (ev.currentTarget) ev.currentTarget.classList.add('drag-over'); }
         function clearDropStyle(ev) { if (ev.currentTarget) ev.currentTarget.classList.remove('drag-over'); }
-        function handleDragStart(ev, taskId) { ev.dataTransfer.setData("taskId", taskId); }
+        function handleDragStart(ev, taskId) { 
+            draggedTaskId = taskId; 
+            ev.dataTransfer.setData("text/plain", taskId);
+        }
 
         async function handleDrop(ev, newStatus) {
             ev.preventDefault(); clearDropStyle(ev);
-            const taskId = ev.dataTransfer.getData("taskId");
-            if (taskId) await updateTaskStatus(taskId, newStatus);
+            const taskId = draggedTaskId || ev.dataTransfer.getData("text/plain");
+            if (taskId) {
+                await updateTaskStatus(taskId, newStatus);
+                draggedTaskId = null;
+            }
         }
 
         async function handleDropWeek(ev, weekNum) {
             ev.preventDefault(); clearDropStyle(ev);
-            const taskId = ev.dataTransfer.getData("taskId");
+            const taskId = draggedTaskId || ev.dataTransfer.getData("text/plain");
             if (taskId) {
                 await supabaseClient.from('tasks').update({ week: weekNum }).eq('id', taskId);
+                draggedTaskId = null;
                 await loadTasksFromCloud();
             }
         }
@@ -525,6 +558,17 @@
                 if (btn) btn.classList.remove('type-btn-active');
             } else {
                 selectedTypes.push(type);
+                if (btn) btn.classList.add('type-btn-active');
+            }
+        }
+
+        function toggleEditTypeTag(type) {
+            const btn = document.getElementById('edit-tag-' + type);
+            if (editSelectedTypes.includes(type)) {
+                editSelectedTypes = editSelectedTypes.filter(function(t) { return t !== type; });
+                if (btn) btn.classList.remove('type-btn-active');
+            } else {
+                editSelectedTypes.push(type);
                 if (btn) btn.classList.add('type-btn-active');
             }
         }
@@ -650,29 +694,20 @@
             loadTasksFromCloud();
         }
 
-        // APERTURA MODALE PER ALLOCARE TASK NON ASSEGNATI
+        // APERTURA MODALE CON POPOLAMENTO DEDICATO TASK LIBERI
         function openAssignWeekModal(weekNum) {
             document.getElementById('assign-week-num').value = weekNum;
             document.getElementById('assign-week-label').innerText = 'Settimana ' + weekNum;
 
             const select = document.getElementById('unassigned-task-select');
 
-            // MOSTRA TUTTI I TASK LIBERI (Non assegnati ad altre settimane)
+            // MOSTRA TUTTI I TASK LIBERI (week è null, 0 o indefinito)
             const unassigned = tasksList.filter(function(t) {
-                // Se ha già una settimana assegnata diversa da quella corrente, escludilo
-                if (t.week && t.week != 0 && t.week != weekNum) return false;
-                
-                // Se ha una deadline con settimana diversa, escludilo
-                if (t.deadline) {
-                    const dlWeek = getISOWeekInfo(new Date(t.deadline)).weekNum;
-                    if (dlWeek != weekNum) return false;
-                }
-
-                return true;
+                return !t.week || t.week == 0;
             });
 
             if (unassigned.length === 0) {
-                select.innerHTML = '<option value="">Tutti i tuoi task sono già assegnati!</option>';
+                select.innerHTML = '<option value="">Tutti i tuoi task sono già assegnati alle settimane!</option>';
             } else {
                 select.innerHTML = unassigned.map(function(t) {
                     const statusLabel = t.status === 'completato' ? ' [COMPLETATO]' : '';
@@ -717,6 +752,16 @@
             document.getElementById('edit-task-project').value = task.project || 'Generale';
             document.getElementById('edit-task-deadline').value = task.deadline || '';
             document.getElementById('edit-task-size').value = task.size || 'M';
+            
+            editSelectedTypes = Array.isArray(task.types) ? [...task.types] : [];
+            Object.keys(typeIcons).forEach(function(t) {
+                const el = document.getElementById('edit-tag-' + t);
+                if (el) {
+                    if (editSelectedTypes.includes(t)) el.classList.add('type-btn-active');
+                    else el.classList.remove('type-btn-active');
+                }
+            });
+
             openModal('edit-task-modal');
         }
 
@@ -732,7 +777,15 @@
                 weekNum = getISOWeekInfo(new Date(deadline)).weekNum;
             }
 
-            await supabaseClient.from('tasks').update({ title: title, project: project, deadline: deadline, week: weekNum, size: size }).eq('id', id);
+            await supabaseClient.from('tasks').update({ 
+                title: title, 
+                project: project, 
+                deadline: deadline, 
+                week: weekNum, 
+                size: size,
+                types: editSelectedTypes 
+            }).eq('id', id);
+
             closeModal('edit-task-modal');
             loadTasksFromCloud();
         }
@@ -742,11 +795,13 @@
             if (!container) return;
             
             const searchText = document.getElementById('filter-search') ? document.getElementById('filter-search').value.toLowerCase() : '';
+            const typeFilter = document.getElementById('filter-type') ? document.getElementById('filter-type').value : 'all';
             const projFilter = document.getElementById('filter-project') ? document.getElementById('filter-project').value : 'all';
             const sizeFilter = document.getElementById('filter-size') ? document.getElementById('filter-size').value : 'all';
 
             let filtered = tasksList;
             if (searchText) filtered = filtered.filter(function(t) { return t.title.toLowerCase().includes(searchText); });
+            if (typeFilter !== 'all') filtered = filtered.filter(function(t) { return Array.isArray(t.types) && t.types.includes(typeFilter); });
             if (projFilter !== 'all') filtered = filtered.filter(function(t) { return (t.project || 'Generale') === projFilter; });
             if (sizeFilter !== 'all') filtered = filtered.filter(function(t) { return (t.size || 'M') === sizeFilter; });
 
@@ -816,7 +871,7 @@
             });
         }
 
-        // RENDERING PROGRAMMA SETTIMANALE CON SCHEDE COMPLETATE IN VERDE
+        // PROGRAMMA SETTIMANALE CON SCHEDE VERDI E DRAG & DROP
         function renderProgram() {
             const container = document.getElementById('program-weeks-container');
             if (!container) return;
