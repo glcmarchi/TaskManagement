@@ -262,12 +262,12 @@
                 </div>
             </div>
 
-            <!-- VISTA: PROGRAMMA SETTIMANALE REALETIME CON ASSEGNAZIONE TASK ESISTENTI -->
+            <!-- VISTA: PROGRAMMA SETTIMANALE REALETIME CON DRAG & DROP E STATO VERDE -->
             <div id="tab-program" class="p-8 space-y-6 hidden">
                 <div class="flex justify-between items-center">
                     <div>
                         <h2 class="text-2xl font-bold text-gray-900">Programma Settimanale Attività</h2>
-                        <p class="text-gray-500 text-sm">Assegna le tue attività esistenti alle settimane lavorative o trascinale col mouse.</p>
+                        <p class="text-gray-500 text-sm">Assegna le tue attività esistenti alle settimane lavorative o trascinale col mouse da una settimana all'altra.</p>
                     </div>
                 </div>
                 <div id="program-weeks-container" class="space-y-6"></div>
@@ -648,26 +648,36 @@
             loadTasksFromCloud();
         }
 
-        // APERTURA MODALE PER ASSEGNARE TASK ESISTENTE ALLA SETTIMANA
+        // APERTURA MODALE CON FILTRO CORRETTO PERIODE/COMPLETATI
         function openAssignWeekModal(weekNum) {
             document.getElementById('assign-week-num').value = weekNum;
             document.getElementById('assign-week-label').innerText = 'Settimana ' + weekNum;
 
             const select = document.getElementById('unassigned-task-select');
             
-            // Filtra solo i task non ancora assegnati ad alcuna settimana o senza deadline
+            const currentISOWeek = getISOWeekInfo(new Date()).weekNum;
+
+            // FILTRO TASK LIBERI:
+            // 1. Non deve essere già assegnato a un'altra settimana.
+            // 2. Se è completato, è selezionabile SOLO SE appartiene alla settimana corrente o successiva.
             const unassigned = tasksList.filter(function(t) {
-                if (t.deadline) {
-                    return getISOWeekInfo(new Date(t.deadline)).weekNum != weekNum && !t.week;
-                }
-                return !t.week || t.week == 0;
+                const taskWeek = t.deadline ? getISOWeekInfo(new Date(t.deadline)).weekNum : t.week;
+                
+                // Se è già assegnato a un'altra settimana diversa da quella corrente selezionata, va escluso
+                if (taskWeek && taskWeek != weekNum) return false;
+
+                // Se il task è completato, lo mostriamo solo se appartiene alla settimana target
+                if (t.status === 'completato' && taskWeek && taskWeek < currentISOWeek) return false;
+
+                return true;
             });
 
             if (unassigned.length === 0) {
                 select.innerHTML = '<option value="">Nessun task disponibile per l allocazione</option>';
             } else {
                 select.innerHTML = unassigned.map(function(t) {
-                    return '<option value="' + t.id + '">' + t.title + ' (' + (t.project || 'Generale') + ' - Effort: ' + (t.size||'M') + ')</option>';
+                    const statusLabel = t.status === 'completato' ? ' [COMPLETATO]' : '';
+                    return '<option value="' + t.id + '">' + t.title + statusLabel + ' (' + (t.project || 'Generale') + ' - Effort: ' + (t.size||'M') + ')</option>';
                 }).join('');
             }
 
@@ -807,6 +817,7 @@
             });
         }
 
+        // VISTA PROGRAMMA SETTIMANALE CON SCHEDE VERDI SE COMPLETATE
         function renderProgram() {
             const container = document.getElementById('program-weeks-container');
             if (!container) return;
@@ -827,12 +838,17 @@
                 });
 
                 const taskItems = wTasks.map(function(t) {
-                    return '<div draggable="true" ondragstart="handleDragStart(event, \'' + t.id + '\')" class="bg-white p-3 rounded-lg border shadow-sm flex justify-between items-center cursor-grab">' +
-                        '<div>' +
-                            '<span class="font-medium text-sm text-gray-800">' + t.title + '</span>' +
-                            '<span class="ml-2 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">' + (t.project || 'Generale') + '</span>' +
+                    const isCompleted = t.status === 'completato';
+                    const bgClass = isCompleted ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200';
+                    const statusBadge = isCompleted ? '<span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-0.5 rounded">Fatto</span>' : '<span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-0.5 rounded">In Corso</span>';
+
+                    return '<div draggable="true" ondragstart="handleDragStart(event, \'' + t.id + '\')" class="' + bgClass + ' p-3 rounded-lg border shadow-sm flex justify-between items-center cursor-grab hover:border-blue-400 transition">' +
+                        '<div class="flex items-center space-x-2">' +
+                            '<span class="font-medium text-sm ' + (isCompleted ? 'line-through text-gray-500' : 'text-gray-800') + '">' + t.title + '</span>' +
+                            '<span class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-medium">' + (t.project || 'Generale') + '</span>' +
                         '</div>' +
                         '<div class="flex items-center space-x-2">' +
+                            statusBadge +
                             getDeadlineBadge(t.deadline) +
                             '<span class="bg-purple-100 text-purple-800 text-xs font-bold px-2 py-0.5 rounded">' + (t.size || 'M') + '</span>' +
                             '<button onclick="removeTaskFromWeek(\'' + t.id + '\')" class="text-gray-400 hover:text-red-500 ml-1" title="Rimuovi da questa settimana">❌</button>' +
