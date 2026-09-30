@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Task & Admin Hub (v1.2)</title>
+    <title>Nexus Task & Admin Hub (v1.3)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -33,7 +33,7 @@
             </div>
             <div class="flex items-center justify-center space-x-2">
                 <h2 class="text-2xl font-bold text-gray-900">TaskNexus Workspace</h2>
-                <span class="bg-blue-100 text-blue-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full">v1.2</span>
+                <span class="bg-blue-100 text-blue-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full">v1.3</span>
             </div>
             <p class="text-sm text-gray-500">Accedi con il tuo account Google per gestire i tuoi task e collaborare in sicurezza.</p>
             
@@ -65,7 +65,7 @@
             <div class="flex items-center space-x-2">
                 <div class="bg-blue-600 text-white p-1.5 rounded-lg"><i data-lucide="layers" class="w-5 h-5"></i></div>
                 <span class="font-bold text-base">TaskNexus</span>
-                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">v1.2</span>
+                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">v1.3</span>
             </div>
             <button onclick="toggleMobileMenu()" class="p-2 text-slate-300 hover:text-white focus:outline-none">
                 <i data-lucide="menu" class="w-6 h-6"></i>
@@ -81,7 +81,7 @@
                         <div>
                             <div class="flex items-center space-x-1.5">
                                 <h1 class="font-bold text-white text-lg leading-none">TaskNexus</h1>
-                                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded">v1.2</span>
+                                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded">v1.3</span>
                             </div>
                             <span class="text-xs text-slate-400" id="workspace-label">Workspace Attivo</span>
                         </div>
@@ -91,8 +91,8 @@
 
                 <nav class="space-y-1">
                     <button onclick="switchTab('focus')" id="nav-focus" class="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium sidebar-item-active">
-                        <i data-lucide="zap" class="w-5 h-5"></i>
-                        <span>Priorità Oggi</span>
+                        <i data-lucide="check-square" class="w-5 h-5"></i>
+                        <span>Le mie attività</span>
                     </button>
                     <button onclick="switchTab('kanban')" id="nav-kanban" class="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800">
                         <i data-lucide="layout-grid" class="w-5 h-5"></i>
@@ -187,10 +187,10 @@
                 </form>
             </header>
 
-            <!-- VISTA: PRIORITÀ OGGI -->
+            <!-- VISTA: LE MIE ATTIVITÀ (EX PRIORITÀ OGGI) -->
             <div id="tab-focus" class="p-4 sm:p-8 space-y-6">
                 <div>
-                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Cosa devo fare Oggi?</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Le mie attività</h2>
                     <p class="text-gray-500 text-xs sm:text-sm">Dashboard personale e dei task assegnati sincronizzata in Cloud.</p>
                 </div>
 
@@ -227,7 +227,7 @@
                     </div>
                 </div>
 
-                <!-- CODA TASK CON FILTRI -->
+                <!-- CODA TASK CON FILTRI INCLUSO CANALE/TIPO E TAGLIA -->
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
                     <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div class="flex items-center space-x-2">
@@ -250,41 +250,52 @@
                             <select id="filter-project" onchange="renderTasks()" class="px-2 py-1.5 bg-gray-100 border rounded-lg text-gray-700 outline-none w-full">
                                 <option value="all">Tutti i Progetti</option>
                             </select>
+
+                            <!-- FILTRO TAGLIA RIPRISTINATO -->
+                            <select id="filter-size" onchange="renderTasks()" class="px-2 py-1.5 bg-gray-100 border rounded-lg text-gray-700 font-medium outline-none w-full">
+                                <option value="all">Tutte le Taglie</option>
+                                <option value="XS">XS</option>
+                                <option value="S">S</option>
+                                <option value="M">M</option>
+                                <option value="L">L</option>
+                                <option value="XL">XL</option>
+                                <option value="XXL">XXL</option>
+                            </select>
                         </div>
                     </div>
                     <div class="divide-y divide-gray-100" id="tasks-container"></div>
                 </div>
             </div>
 
-            <!-- VISTA: KANBAN BOARD -->
+            <!-- VISTA: KANBAN BOARD DRAG & DROP -->
             <div id="tab-kanban" class="p-4 sm:p-8 space-y-6 hidden">
                 <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Vista Kanban Board</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3">
+                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3" ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDropKanban(event, 'in_corso')">
                         <div class="font-bold text-slate-700 text-xs sm:text-sm flex justify-between items-center">
                             <span>IN CORSO</span>
                             <span id="kanban-count-in_corso" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full">0</span>
                         </div>
-                        <div id="kanban-col-in_corso" class="space-y-3 min-h-[200px]"></div>
+                        <div id="kanban-col-in_corso" class="space-y-3 min-h-[300px]"></div>
                     </div>
-                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3">
+                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3" ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDropKanban(event, 'in_attesa')">
                         <div class="font-bold text-slate-700 text-xs sm:text-sm flex justify-between items-center">
                             <span>IN ATTESA</span>
                             <span id="kanban-count-in_attesa" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full">0</span>
                         </div>
-                        <div id="kanban-col-in_attesa" class="space-y-3 min-h-[200px]"></div>
+                        <div id="kanban-col-in_attesa" class="space-y-3 min-h-[300px]"></div>
                     </div>
-                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3">
+                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3" ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDropKanban(event, 'completato')">
                         <div class="font-bold text-slate-700 text-xs sm:text-sm flex justify-between items-center">
                             <span>COMPLETATI</span>
                             <span id="kanban-count-completato" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full">0</span>
                         </div>
-                        <div id="kanban-col-completato" class="space-y-3 min-h-[200px]"></div>
+                        <div id="kanban-col-completato" class="space-y-3 min-h-[300px]"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- VISTA: PROGRAMMA SETTIMANALE CON DRAG & DROP REALE -->
+            <!-- VISTA: PROGRAMMA SETTIMANALE -->
             <div id="tab-program" class="p-4 sm:p-8 space-y-6 hidden">
                 <div>
                     <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Programma Settimanale</h2>
@@ -417,7 +428,7 @@
         </div>
     </div>
 
-    <!-- LOGICA JS V1.2 DEFINITIVA -->
+    <!-- LOGICA JS V1.3 DEFINITIVA -->
     <script>
         const SUPABASE_URL = "https://fpnetrdboqanxfeemajg.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_2H6o6gTA4lBy4RlG50p1eQ_iPp03lY6";
@@ -433,7 +444,7 @@
         let tasksList = [];
         let selectedTypes = [];
         let editSelectedTypes = [];
-        let draggedTaskId = null; // Memorizza l'ID per il Drag & Drop nativo
+        let draggedTaskId = null;
 
         const typeIcons = {
             telefono: { icon: 'phone', label: 'Telefono' },
@@ -492,7 +503,7 @@
             </span>`;
         }
 
-        // DRAG & DROP HTML5 RIPRISTINATO
+        // DRAG & DROP HTML5 RIPRISTINATO SIA PER KANBAN CHE PROGRAMMA
         function handleDragStart(ev, taskId) {
             draggedTaskId = taskId;
             try { ev.dataTransfer.setData("text/plain", taskId); } catch(e){}
@@ -505,6 +516,16 @@
 
         function clearDropStyle(ev) {
             if (ev.currentTarget) ev.currentTarget.classList.remove('drag-over-zone');
+        }
+
+        async function handleDropKanban(ev, newStatus) {
+            ev.preventDefault();
+            clearDropStyle(ev);
+            const taskId = draggedTaskId || (ev.dataTransfer ? ev.dataTransfer.getData("text/plain") : null);
+            if (taskId) {
+                await updateTaskStatus(taskId, newStatus);
+                draggedTaskId = null;
+            }
         }
 
         async function handleDropWeek(ev, targetWeekNum) {
@@ -702,7 +723,6 @@
             loadTasksFromCloud();
         }
 
-        // MOSTRA TUTTI I TASK LIBERI (week == null, undefined, 0 o vuoto)
         function openAssignWeekModal(weekNum) {
             document.getElementById('assign-week-num').value = weekNum;
             document.getElementById('assign-week-label').innerText = 'Settimana ' + weekNum;
@@ -805,11 +825,13 @@
             const searchText = document.getElementById('filter-search') ? document.getElementById('filter-search').value.toLowerCase() : '';
             const typeFilter = document.getElementById('filter-type') ? document.getElementById('filter-type').value : 'all';
             const projFilter = document.getElementById('filter-project') ? document.getElementById('filter-project').value : 'all';
+            const sizeFilter = document.getElementById('filter-size') ? document.getElementById('filter-size').value : 'all';
 
             let filtered = tasksList;
             if (searchText) filtered = filtered.filter(function(t) { return t.title.toLowerCase().includes(searchText); });
             if (typeFilter !== 'all') filtered = filtered.filter(function(t) { return Array.isArray(t.types) && t.types.includes(typeFilter); });
             if (projFilter !== 'all') filtered = filtered.filter(function(t) { return (t.project || 'Generale') === projFilter; });
+            if (sizeFilter !== 'all') filtered = filtered.filter(function(t) { return (t.size || 'M') === sizeFilter; });
 
             if (filtered.length === 0) {
                 container.innerHTML = '<div class="p-8 text-center text-gray-400">Nessun task corrisponde ai criteri di ricerca.</div>';
@@ -847,6 +869,7 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
+        // RENDERING KANBAN CON DRAG & DROP RIPRISTINATO
         function renderKanban() {
             const cols = ['in_corso', 'in_attesa', 'completato'];
             cols.forEach(function(col) {
@@ -858,12 +881,12 @@
                 if (countBadge) countBadge.innerText = items.length;
 
                 if (items.length === 0) {
-                    container.innerHTML = '<p class="text-xs text-gray-400 p-3 text-center border border-dashed rounded-lg">Nessun task</p>';
+                    container.innerHTML = '<p class="text-xs text-gray-400 p-3 text-center border border-dashed rounded-lg">Trascina un task qui</p>';
                     return;
                 }
 
                 container.innerHTML = items.map(function(t) {
-                    return '<div class="bg-white p-3 rounded-lg border shadow-sm space-y-2">' +
+                    return '<div draggable="true" ondragstart="handleDragStart(event, \'' + t.id + '\')" class="bg-white drag-card p-3 rounded-lg border shadow-sm space-y-2 hover:border-blue-400 transition">' +
                         '<div class="flex justify-between items-start">' +
                             '<p class="text-sm font-semibold text-gray-800">' + t.title + '</p>' +
                             '<span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-1.5 py-0.5 rounded">' + (t.size || 'M') + '</span>' +
@@ -877,7 +900,7 @@
             });
         }
 
-        // RENDERING PROGRAMMA SETTIMANALE CON DRAG & DROP REALE CONFERMATO
+        // RENDERING PROGRAMMA SETTIMANALE CON DRAG & DROP RIPRISTINATO
         function renderProgram() {
             const container = document.getElementById('program-weeks-container');
             if (!container) return;
@@ -995,7 +1018,7 @@
                         '<h1 class="text-2xl font-bold">Programma Lavorativo Settimanale</h1>' +
                         '<p class="text-sm text-gray-600">Settimana N. ' + wInfo.weekNum + ' (' + wInfo.rangeStr + ')</p>' +
                     '</div>' +
-                    '<p class="text-xs text-gray-400">TaskNexus Studio v1.2</p>' +
+                    '<p class="text-xs text-gray-400">TaskNexus Studio v1.3</p>' +
                 '</div>' +
                 '<div class="space-y-3 pt-4">' +
                     (wTasks.map(function(t) {
@@ -1020,8 +1043,8 @@
                 csvContent += `"${t.id}","${t.title}","${t.project||'Generale'}","${t.status}","${t.size||'M'}","${t.deadline||''}","${t.assigned_email||''}"\n`;
             });
             const encodedUri = encodeURI(csvContent);
-            const link = document.append ? document.createElement("a") : null;
-            link.setAttribute("href", encodeURI(csvContent));
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
             link.setAttribute("download", "TaskNexus_Export.csv");
             document.body.appendChild(link);
             link.click();
