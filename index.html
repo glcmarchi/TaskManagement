@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nexus Task & Admin Hub</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,26 +13,25 @@
     <style>
         .sidebar-item-active { background-color: #3b82f6; color: white; }
         .type-btn-active { background-color: #3b82f6; color: white; border-color: #2563eb; }
-        .drag-over { border: 2px dashed #3b82f6 !important; background-color: #eff6ff !important; }
         @media print {
-            aside, header, button, .no-print { display: none !important; }
+            aside, header, button, .no-print, #mobile-header { display: none !important; }
             main { padding: 0 !important; background: white !important; }
             .print-area { display: block !important; border: none !important; box-shadow: none !important; }
         }
     </style>
 </head>
-<body class="bg-gray-100 font-sans text-gray-800 antialiased">
+<body class="bg-gray-100 font-sans text-gray-800 antialiased selection:bg-blue-100">
 
     <!-- SCHERMATA LOGIN GOOGLE -->
     <div id="login-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center space-y-6">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md w-full text-center space-y-6">
             <div class="inline-flex bg-blue-600 text-white p-3 rounded-xl mb-2">
                 <i data-lucide="layers" class="w-8 h-8"></i>
             </div>
             <h2 class="text-2xl font-bold text-gray-900">TaskNexus Workspace</h2>
             <p class="text-sm text-gray-500">Accedi con il tuo account Google per gestire i tuoi task e collaborare in sicurezza.</p>
             
-            <button id="btn-login-google" type="button" class="w-full flex items-center justify-center space-x-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-xl shadow-sm transition">
+            <button id="btn-login-google" type="button" class="w-full flex items-center justify-center space-x-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-xl shadow-sm transition active:scale-95">
                 <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
                 <span>Accedi con Google</span>
             </button>
@@ -53,44 +52,59 @@
     </div>
 
     <!-- APP PRINCIPALE -->
-    <div id="app-screen" class="flex h-screen overflow-hidden hidden">
-        <!-- SIDEBAR -->
-        <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between p-4 flex-shrink-0">
+    <div id="app-screen" class="flex flex-col md:flex-row h-screen overflow-hidden hidden">
+        
+        <!-- HEADER MOBILE (VISIBILE SOLO SU SMARTPHONE) -->
+        <div id="mobile-header" class="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center z-20 sticky top-0 shadow">
+            <div class="flex items-center space-x-2">
+                <div class="bg-blue-600 text-white p-1.5 rounded-lg"><i data-lucide="layers" class="w-5 h-5"></i></div>
+                <span class="font-bold text-base">TaskNexus</span>
+            </div>
+            <button onclick="toggleMobileMenu()" class="p-2 text-slate-300 hover:text-white focus:outline-none">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- SIDEBAR (RESPONSIVE DROPDOWN PER MOBILE) -->
+        <aside id="sidebar-menu" class="hidden md:flex w-full md:w-64 bg-slate-900 text-slate-300 flex-col justify-between p-4 flex-shrink-0 z-30 fixed md:relative inset-0 h-full overflow-y-auto">
             <div>
-                <div class="flex items-center space-x-3 mb-8 px-2">
-                    <div class="bg-blue-600 text-white p-2 rounded-lg"><i data-lucide="layers"></i></div>
-                    <div>
-                        <h1 class="font-bold text-white text-lg leading-none">TaskNexus</h1>
-                        <span class="text-xs text-slate-400" id="workspace-label">Workspace Attivo</span>
+                <div class="flex items-center justify-between mb-8 px-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-blue-600 text-white p-2 rounded-lg"><i data-lucide="layers"></i></div>
+                        <div>
+                            <h1 class="font-bold text-white text-lg leading-none">TaskNexus</h1>
+                            <span class="text-xs text-slate-400" id="workspace-label">Workspace Attivo</span>
+                        </div>
                     </div>
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-slate-400 p-1"><i data-lucide="x" class="w-6 h-6"></i></button>
                 </div>
 
                 <nav class="space-y-1">
-                    <button onclick="switchTab('focus')" id="nav-focus" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium sidebar-item-active">
+                    <button onclick="switchTab('focus')" id="nav-focus" class="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium sidebar-item-active">
                         <i data-lucide="zap" class="w-5 h-5"></i>
                         <span>Priorità Oggi</span>
                     </button>
-                    <button onclick="switchTab('kanban')" id="nav-kanban" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
+                    <button onclick="switchTab('kanban')" id="nav-kanban" class="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800">
                         <i data-lucide="layout-grid" class="w-5 h-5"></i>
                         <span>Vista Kanban</span>
                     </button>
-                    <button onclick="switchTab('program')" id="nav-program" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
+                    <button onclick="switchTab('program')" id="nav-program" class="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800">
                         <i data-lucide="calendar-range" class="w-5 h-5"></i>
                         <span>Programma Settimanale</span>
                     </button>
-                    <button onclick="switchTab('projects')" id="nav-projects" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
+                    <button onclick="switchTab('projects')" id="nav-projects" class="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800">
                         <i data-lucide="folder-tree" class="w-5 h-5"></i>
                         <span>Progetti & Attività</span>
                     </button>
-                    <button onclick="switchTab('reporting')" id="nav-reporting" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
+                    <button onclick="switchTab('reporting')" id="nav-reporting" class="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800">
                         <i data-lucide="printer" class="w-5 h-5"></i>
                         <span>Stampa Programma</span>
                     </button>
-                    <button onclick="switchTab('utility')" id="nav-utility" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
+                    <button onclick="switchTab('utility')" id="nav-utility" class="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800">
                         <i data-lucide="wrench" class="w-5 h-5"></i>
                         <span>Utility & Export</span>
                     </button>
-                    <button onclick="switchTab('admin')" id="nav-admin" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 hidden">
+                    <button onclick="switchTab('admin')" id="nav-admin" class="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hidden">
                         <i data-lucide="shield-check" class="w-5 h-5"></i>
                         <span>Consola Admin</span>
                     </button>
@@ -98,7 +112,7 @@
             </div>
 
             <!-- PROFILE FOOTER -->
-            <div class="pt-4 border-t border-slate-800 flex items-center justify-between px-2">
+            <div class="pt-4 border-t border-slate-800 flex items-center justify-between px-2 mt-6 md:mt-0">
                 <div class="flex items-center space-x-3">
                     <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold text-white text-sm" id="user-avatar">U</div>
                     <div class="text-xs">
@@ -106,27 +120,25 @@
                         <p class="text-slate-400" id="user-role-label">Utente</p>
                     </div>
                 </div>
-                <button onclick="logout()" class="text-slate-400 hover:text-white" title="Disconnetti"><i data-lucide="log-out" class="w-4 h-4"></i></button>
+                <button onclick="logout()" class="text-slate-400 hover:text-white p-2" title="Disconnetti"><i data-lucide="log-out" class="w-5 h-5"></i></button>
             </div>
         </aside>
 
         <!-- AREA CONTENUTO PRINCIPALE -->
         <main class="flex-1 bg-slate-50 flex flex-col overflow-y-auto">
-            <!-- HEADER CON DATA ENTRY RAPIDO -->
-            <header class="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-10 space-y-3 no-print">
+            <!-- HEADER CON DATA ENTRY RAPIDO RESPONSIVE -->
+            <header class="bg-white border-b border-gray-200 p-4 sm:px-8 py-4 sticky top-0 z-10 space-y-3 no-print shadow-sm">
                 <form onsubmit="addTask(event)" class="space-y-3">
-                    <div class="flex items-center space-x-3">
-                        <div class="relative flex-1">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2 sm:gap-3 items-center">
+                        <div class="relative md:col-span-5">
                             <i data-lucide="plus-circle" class="w-5 h-5 absolute left-3 top-2.5 text-gray-400"></i>
                             <input id="task-input" type="text" placeholder="Scrivi un nuovo task e premi Invio..." class="w-full pl-10 pr-4 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-sm outline-none transition" required>
                         </div>
-                        <input id="project-input" type="text" placeholder="Progetto" class="w-36 px-3 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-sm outline-none transition">
+                        <input id="project-input" type="text" placeholder="Progetto" class="md:col-span-2 px-3 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-sm outline-none transition">
                         
-                        <!-- DEADLINE OPZIONALE -->
-                        <input id="deadline-input" type="date" title="Deadline Opzionale" class="w-36 px-2 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-xs outline-none transition text-gray-700">
+                        <input id="deadline-input" type="date" title="Deadline Opzionale" class="md:col-span-2 px-2 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-xs outline-none transition text-gray-700">
 
-                        <!-- SELETTORE TAGLIA EFFORT -->
-                        <select id="size-input" class="w-28 px-3 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-sm outline-none transition font-semibold text-gray-700">
+                        <select id="size-input" class="md:col-span-2 px-3 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-sm outline-none transition font-semibold text-gray-700">
                             <option value="S">Taglia: S</option>
                             <option value="XS">Taglia: XS</option>
                             <option value="M" selected>Taglia: M</option>
@@ -135,30 +147,30 @@
                             <option value="XXL">Taglia: XXL</option>
                         </select>
 
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-1">
+                        <button type="submit" class="md:col-span-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition flex items-center justify-center space-x-1 active:scale-95">
                             <span>Aggiungi</span>
                         </button>
                     </div>
 
-                    <!-- CANALI / TIPOLOGIA -->
-                    <div class="flex items-center space-x-2 text-xs">
-                        <span class="text-gray-400 font-medium mr-1">Canale/Tipo:</span>
-                        <button type="button" onclick="toggleTypeTag('telefono')" id="tag-telefono" class="flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+                    <!-- CANALI / TIPOLOGIA RESPONSIVE -->
+                    <div class="flex items-center space-x-1.5 text-xs overflow-x-auto pb-1">
+                        <span class="text-gray-400 font-medium mr-1 flex-shrink-0">Tipo:</span>
+                        <button type="button" onclick="toggleTypeTag('telefono')" id="tag-telefono" class="flex-shrink-0 flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
                             <i data-lucide="phone" class="w-3.5 h-3.5"></i><span>Telefono</span>
                         </button>
-                        <button type="button" onclick="toggleTypeTag('mail')" id="tag-mail" class="flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+                        <button type="button" onclick="toggleTypeTag('mail')" id="tag-mail" class="flex-shrink-0 flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
                             <i data-lucide="mail" class="w-3.5 h-3.5"></i><span>Mail</span>
                         </button>
-                        <button type="button" onclick="toggleTypeTag('supermail')" id="tag-supermail" class="flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+                        <button type="button" onclick="toggleTypeTag('supermail')" id="tag-supermail" class="flex-shrink-0 flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
                             <i data-lucide="file-text" class="w-3.5 h-3.5"></i><span>Supermail</span>
                         </button>
-                        <button type="button" onclick="toggleTypeTag('meeting')" id="tag-meeting" class="flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+                        <button type="button" onclick="toggleTypeTag('meeting')" id="tag-meeting" class="flex-shrink-0 flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
                             <i data-lucide="users" class="w-3.5 h-3.5"></i><span>Meeting</span>
                         </button>
-                        <button type="button" onclick="toggleTypeTag('studio')" id="tag-studio" class="flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
-                            <i data-lucide="search" class="w-3.5 h-3.5"></i><span>Studio/Analisi</span>
+                        <button type="button" onclick="toggleTypeTag('studio')" id="tag-studio" class="flex-shrink-0 flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+                            <i data-lucide="search" class="w-3.5 h-3.5"></i><span>Studio</span>
                         </button>
-                        <button type="button" onclick="toggleTypeTag('testing')" id="tag-testing" class="flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+                        <button type="button" onclick="toggleTypeTag('testing')" id="tag-testing" class="flex-shrink-0 flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
                             <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i><span>Testing</span>
                         </button>
                     </div>
@@ -166,79 +178,67 @@
             </header>
 
             <!-- VISTA: PRIORITÀ OGGI -->
-            <div id="tab-focus" class="p-8 space-y-6">
+            <div id="tab-focus" class="p-4 sm:p-8 space-y-6">
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-900">Cosa devo fare Oggi?</h2>
-                    <p class="text-gray-500 text-sm">Dashboard personale e dei task assegnati sincronizzata in Cloud.</p>
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Cosa devo fare Oggi?</h2>
+                    <p class="text-gray-500 text-xs sm:text-sm">Dashboard personale e dei task assegnati sincronizzata in Cloud.</p>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-blue-500">
-                        <div class="text-xs font-semibold text-gray-400 uppercase">In Corso</div>
-                        <div class="text-3xl font-bold text-gray-900 mt-1" id="count-in-corso">0</div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-blue-500">
+                        <div class="text-[11px] font-semibold text-gray-400 uppercase">In Corso</div>
+                        <div class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1" id="count-in-corso">0</div>
                     </div>
-                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-amber-500">
-                        <div class="text-xs font-semibold text-gray-400 uppercase">In Attesa</div>
-                        <div class="text-3xl font-bold text-gray-900 mt-1" id="count-in-attesa">0</div>
+                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-amber-500">
+                        <div class="text-[11px] font-semibold text-gray-400 uppercase">In Attesa</div>
+                        <div class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1" id="count-in-attesa">0</div>
                     </div>
-                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-red-500">
-                        <div class="text-xs font-semibold text-red-500 uppercase flex items-center space-x-1">
-                            <span>In Ritardo</span>
-                        </div>
-                        <div class="text-3xl font-bold text-red-600 mt-1" id="count-in-ritardo">0</div>
+                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-red-500">
+                        <div class="text-[11px] font-semibold text-red-500 uppercase">In Ritardo</div>
+                        <div class="text-2xl sm:text-3xl font-bold text-red-600 mt-1" id="count-in-ritardo">0</div>
                     </div>
-                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-green-500">
-                        <div class="text-xs font-semibold text-gray-400 uppercase">Completati</div>
-                        <div class="text-3xl font-bold text-gray-900 mt-1" id="count-completati">0</div>
+                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-green-500">
+                        <div class="text-[11px] font-semibold text-gray-400 uppercase">Completati</div>
+                        <div class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1" id="count-completati">0</div>
                     </div>
                 </div>
 
                 <!-- SEZIONE GOOGLE CALENDAR -->
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-6 shadow-sm space-y-3">
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 sm:p-6 shadow-sm space-y-3">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-2 sm:space-x-3">
                             <div class="bg-amber-500 text-white p-2 rounded-lg"><i data-lucide="calendar" class="w-5 h-5"></i></div>
-                            <h3 class="font-bold text-amber-900 text-base">Agenda & Eventi Google Calendar di Oggi</h3>
+                            <h3 class="font-bold text-amber-900 text-sm sm:text-base">Google Calendar Oggi</h3>
                         </div>
-                        <button onclick="fetchGoogleCalendarEvents()" class="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg font-medium transition">Sincronizza Ora</button>
+                        <button onclick="fetchGoogleCalendarEvents()" class="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg font-medium transition">Sincronizza</button>
                     </div>
                     <div id="calendar-events-list" class="divide-y divide-amber-200/60 text-sm text-amber-950">
-                        <p class="text-xs text-amber-700 py-2">Clicca su "Sincronizza Ora" per caricare gli appuntamenti della giornata.</p>
+                        <p class="text-xs text-amber-700 py-2">Clicca su "Sincronizza" per caricare gli appuntamenti della giornata.</p>
                     </div>
                 </div>
 
                 <!-- CODA TASK CON FILTRI INCLUSO CANALE/TIPO -->
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
-                    <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
+                    <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div class="flex items-center space-x-2">
-                            <span class="font-bold text-gray-800">Coda di Lavorazione Tasks</span>
-                            <span id="admin-view-indicator" class="text-xs font-normal text-blue-600 bg-blue-50 px-2 py-1 rounded hidden">Vista Totale Admin</span>
+                            <span class="font-bold text-gray-800 text-sm sm:text-base">Coda Tasks</span>
+                            <span id="admin-view-indicator" class="text-[10px] font-normal text-blue-600 bg-blue-50 px-2 py-0.5 rounded hidden">Vista Admin</span>
                         </div>
-                        <div class="flex items-center space-x-3 text-xs flex-wrap gap-2">
-                            <input id="filter-search" type="text" oninput="renderTasks()" placeholder="Cerca task..." class="px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 outline-none w-36">
+                        <div class="grid grid-cols-2 sm:flex items-center gap-2 text-xs w-full sm:w-auto">
+                            <input id="filter-search" type="text" oninput="renderTasks()" placeholder="Cerca..." class="col-span-2 sm:col-span-1 px-2.5 py-1.5 bg-gray-100 border rounded-lg outline-none w-full sm:w-32">
                             
-                            <select id="filter-type" onchange="renderTasks()" class="px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 font-medium outline-none">
-                                <option value="all">Tutti i Canali/Tipi</option>
+                            <select id="filter-type" onchange="renderTasks()" class="px-2 py-1.5 bg-gray-100 border rounded-lg text-gray-700 outline-none w-full">
+                                <option value="all">Tutti i Tipi</option>
                                 <option value="telefono">Telefono</option>
                                 <option value="mail">Mail</option>
                                 <option value="supermail">Supermail</option>
                                 <option value="meeting">Meeting</option>
-                                <option value="studio">Studio/Analisi</option>
+                                <option value="studio">Studio</option>
                                 <option value="testing">Testing</option>
                             </select>
 
-                            <select id="filter-project" onchange="renderTasks()" class="px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 font-medium outline-none">
+                            <select id="filter-project" onchange="renderTasks()" class="px-2 py-1.5 bg-gray-100 border rounded-lg text-gray-700 outline-none w-full">
                                 <option value="all">Tutti i Progetti</option>
-                            </select>
-                            
-                            <select id="filter-size" onchange="renderTasks()" class="px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 font-medium outline-none">
-                                <option value="all">Tutte le Taglie</option>
-                                <option value="XS">XS</option>
-                                <option value="S">S</option>
-                                <option value="M">M</option>
-                                <option value="L">L</option>
-                                <option value="XL">XL</option>
-                                <option value="XXL">XXL</option>
                             </select>
                         </div>
                     </div>
@@ -246,66 +246,62 @@
                 </div>
             </div>
 
-            <!-- VISTA: KANBAN BOARD DRAG & DROP -->
-            <div id="tab-kanban" class="p-8 space-y-6 hidden">
-                <h2 class="text-2xl font-bold text-gray-900">Vista Kanban (Trascina i task per cambiarne lo stato)</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3" ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDrop(event, 'in_corso')">
-                        <div class="font-bold text-slate-700 text-sm flex justify-between items-center">
+            <!-- VISTA: KANBAN BOARD -->
+            <div id="tab-kanban" class="p-4 sm:p-8 space-y-6 hidden">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Vista Kanban Board</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3">
+                        <div class="font-bold text-slate-700 text-xs sm:text-sm flex justify-between items-center">
                             <span>IN CORSO</span>
                             <span id="kanban-count-in_corso" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full">0</span>
                         </div>
-                        <div id="kanban-col-in_corso" class="space-y-3 min-h-[400px]"></div>
+                        <div id="kanban-col-in_corso" class="space-y-3 min-h-[200px]"></div>
                     </div>
-                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3" ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDrop(event, 'in_attesa')">
-                        <div class="font-bold text-slate-700 text-sm flex justify-between items-center">
+                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3">
+                        <div class="font-bold text-slate-700 text-xs sm:text-sm flex justify-between items-center">
                             <span>IN ATTESA</span>
                             <span id="kanban-count-in_attesa" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full">0</span>
                         </div>
-                        <div id="kanban-col-in_attesa" class="space-y-3 min-h-[400px]"></div>
+                        <div id="kanban-col-in_attesa" class="space-y-3 min-h-[200px]"></div>
                     </div>
-                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3" ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDrop(event, 'completato')">
-                        <div class="font-bold text-slate-700 text-sm flex justify-between items-center">
+                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3">
+                        <div class="font-bold text-slate-700 text-xs sm:text-sm flex justify-between items-center">
                             <span>COMPLETATI</span>
                             <span id="kanban-count-completato" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full">0</span>
                         </div>
-                        <div id="kanban-col-completato" class="space-y-3 min-h-[400px]"></div>
+                        <div id="kanban-col-completato" class="space-y-3 min-h-[200px]"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- VISTA: PROGRAMMA SETTIMANALE REALETIME CON DRAG & DROP CORRETTO -->
-            <div id="tab-program" class="p-8 space-y-6 hidden">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-900">Programma Settimanale Attività</h2>
-                        <p class="text-gray-500 text-sm">Assegna le tue attività esistenti alle settimane lavorative o trascinale col mouse da una settimana all'altra.</p>
-                    </div>
+            <!-- VISTA: PROGRAMMA SETTIMANALE CON SELETTORE TOUCH E SPOSTAMENTO -->
+            <div id="tab-program" class="p-4 sm:p-8 space-y-6 hidden">
+                <div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Programma Settimanale</h2>
+                    <p class="text-gray-500 text-xs sm:text-sm">Assegna le tue attività esistenti o spostale tra le varie settimane lavorative.</p>
                 </div>
                 <div id="program-weeks-container" class="space-y-6"></div>
             </div>
 
             <!-- VISTA: ALBERO PROGETTI & ATTIVITÀ -->
-            <div id="tab-projects" class="p-8 space-y-6 hidden">
-                <h2 class="text-2xl font-bold text-gray-900">Struttura Progetti e Attività</h2>
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <div id="tab-projects" class="p-4 sm:p-8 space-y-6 hidden">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Progetti e Attività</h2>
+                <div class="bg-white p-4 sm:p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div id="projects-tree-container" class="space-y-4">Caricamento progetti...</div>
                 </div>
             </div>
 
             <!-- VISTA: REPORTING & STAMPA PROGRAMMA -->
-            <div id="tab-reporting" class="p-8 space-y-6 hidden">
-                <h2 class="text-2xl font-bold text-gray-900">Stampa & Export Programma</h2>
+            <div id="tab-reporting" class="p-4 sm:p-8 space-y-6 hidden">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Stampa Programma</h2>
                 <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4 max-w-xl">
                     <h3 class="font-bold text-gray-800 text-base">Seleziona cosa desideri stampare</h3>
-                    <p class="text-xs text-gray-500">Genera una vista pulita ed esente da menu del programma di lavoro pronta per essere inviata alla stampante o salvata in PDF.</p>
-                    
-                    <div class="flex space-x-3 pt-2">
-                        <button onclick="printProgram('current')" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center space-x-2">
-                            <i data-lucide="printer" class="w-4 h-4"></i><span>Stampa Settimana Corrente</span>
+                    <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                        <button onclick="printProgram('current')" class="w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center justify-center space-x-2">
+                            <i data-lucide="printer" class="w-4 h-4"></i><span>Settimana Corrente</span>
                         </button>
-                        <button onclick="printProgram('next')" class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition flex items-center space-x-2">
-                            <i data-lucide="printer" class="w-4 h-4"></i><span>Stampa Settimana Successiva</span>
+                        <button onclick="printProgram('next')" class="w-full sm:w-auto px-4 py-2.5 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition flex items-center justify-center space-x-2">
+                            <i data-lucide="printer" class="w-4 h-4"></i><span>Settimana Successiva</span>
                         </button>
                     </div>
                 </div>
@@ -314,25 +310,22 @@
             </div>
 
             <!-- VISTA: UTILITY & EXPORT EXCEL -->
-            <div id="tab-utility" class="p-8 space-y-6 hidden">
-                <h2 class="text-2xl font-bold text-gray-900">Utility Workspace & Esportazione Dati</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
-                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-3">
-                        <div class="p-3 bg-green-100 text-green-700 rounded-lg inline-block"><i data-lucide="file-spread-sheet" class="w-6 h-6"></i></div>
-                        <h3 class="font-bold text-gray-800 text-base">Esporta Task in Excel (.CSV / .XLS)</h3>
-                        <p class="text-xs text-gray-500">Scarica l'intero elenco delle tue attività con progetti, taglie, scadenze e canali in formato tabella Excel.</p>
-                        <button onclick="exportToExcel()" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition flex items-center space-x-2">
-                            <i data-lucide="download" class="w-4 h-4"></i><span>Scarica File Excel</span>
-                        </button>
-                    </div>
+            <div id="tab-utility" class="p-4 sm:p-8 space-y-6 hidden">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Utility Workspace</h2>
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-3 max-w-md">
+                    <div class="p-3 bg-green-100 text-green-700 rounded-lg inline-block"><i data-lucide="file-spread-sheet" class="w-6 h-6"></i></div>
+                    <h3 class="font-bold text-gray-800 text-base">Esporta Task in Excel</h3>
+                    <p class="text-xs text-gray-500">Scarica l'elenco completo in formato CSV/Excel.</p>
+                    <button onclick="exportToExcel()" class="w-full px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition flex items-center justify-center space-x-2">
+                        <i data-lucide="download" class="w-4 h-4"></i><span>Scarica File Excel</span>
+                    </button>
                 </div>
             </div>
 
             <!-- VISTA: CONSOLA ADMIN -->
-            <div id="tab-admin" class="p-8 space-y-6 hidden">
-                <h2 class="text-2xl font-bold text-gray-900">Consola Amministrazione Workspace</h2>
+            <div id="tab-admin" class="p-4 sm:p-8 space-y-6 hidden">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Consola Amministrazione</h2>
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
-                    <h3 class="font-bold text-gray-800 text-lg">Richieste Accesso Utenti & Gestione Permessi</h3>
                     <div id="users-admin-list" class="divide-y divide-gray-100">
                         <p class="text-gray-400 text-sm">Caricamento utenti...</p>
                     </div>
@@ -341,11 +334,11 @@
         </main>
     </div>
 
-    <!-- MODALE MODIFICA TASK INCLUSO SELETTORE CANALE/TIPO -->
-    <div id="edit-task-modal" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center hidden z-50">
+    <!-- MODALE MODIFICA TASK -->
+    <div id="edit-task-modal" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center hidden z-50 p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-bold text-gray-900 text-lg">Modifica Task</h3>
+                <h3 class="font-bold text-gray-900 text-base sm:text-lg">Modifica Task</h3>
                 <button onclick="closeModal('edit-task-modal')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x"></i></button>
             </div>
             <input type="hidden" id="edit-task-id">
@@ -374,13 +367,13 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Canali / Tipologie (Seleziona per attivare)</label>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Canali / Tipologie</label>
                     <div class="flex flex-wrap gap-1.5 pt-1 text-xs">
                         <button type="button" onclick="toggleEditTypeTag('telefono')" id="edit-tag-telefono" class="px-2 py-1 rounded border text-gray-600">Telefono</button>
                         <button type="button" onclick="toggleEditTypeTag('mail')" id="edit-tag-mail" class="px-2 py-1 rounded border text-gray-600">Mail</button>
                         <button type="button" onclick="toggleEditTypeTag('supermail')" id="edit-tag-supermail" class="px-2 py-1 rounded border text-gray-600">Supermail</button>
                         <button type="button" onclick="toggleEditTypeTag('meeting')" id="edit-tag-meeting" class="px-2 py-1 rounded border text-gray-600">Meeting</button>
-                        <button type="button" onclick="toggleEditTypeTag('studio')" id="edit-tag-studio" class="px-2 py-1 rounded border text-gray-600">Studio/Analisi</button>
+                        <button type="button" onclick="toggleEditTypeTag('studio')" id="edit-tag-studio" class="px-2 py-1 rounded border text-gray-600">Studio</button>
                         <button type="button" onclick="toggleEditTypeTag('testing')" id="edit-tag-testing" class="px-2 py-1 rounded border text-gray-600">Testing</button>
                     </div>
                 </div>
@@ -392,11 +385,11 @@
         </div>
     </div>
 
-    <!-- MODALE ASSEGNAZIONE TASK ESISTENTE A SETTIMANA SPECIFICA -->
-    <div id="assign-week-task-modal" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center hidden z-50">
+    <!-- MODALE ASSEGNAZIONE TASK ESISTENTE -->
+    <div id="assign-week-task-modal" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center hidden z-50 p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-bold text-gray-900 text-lg">Assegna Task a <span id="assign-week-label" class="text-blue-600"></span></h3>
+                <h3 class="font-bold text-gray-900 text-base sm:text-lg">Assegna Task a <span id="assign-week-label" class="text-blue-600"></span></h3>
                 <button onclick="closeModal('assign-week-task-modal')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x"></i></button>
             </div>
             <input type="hidden" id="assign-week-num">
@@ -404,7 +397,6 @@
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">Seleziona un'attività tra quelle non ancora assegnate:</label>
                     <select id="unassigned-task-select" class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-sm outline-none focus:bg-white focus:border-blue-500 font-medium">
-                        <!-- Popolato via JS con i task non ancora assegnati -->
                     </select>
                 </div>
             </div>
@@ -431,7 +423,6 @@
         let tasksList = [];
         let selectedTypes = [];
         let editSelectedTypes = [];
-        let draggedTaskId = null;
 
         const typeIcons = {
             telefono: { icon: 'phone', label: 'Telefono' },
@@ -441,6 +432,17 @@
             studio: { icon: 'search', label: 'Studio' },
             testing: { icon: 'flask-conical', label: 'Testing' }
         };
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('sidebar-menu');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                menu.classList.add('flex');
+            } else {
+                menu.classList.add('hidden');
+                menu.classList.remove('flex');
+            }
+        }
 
         function getISOWeekInfo(dateObj) {
             const date = new Date(dateObj.getTime());
@@ -474,38 +476,9 @@
                 colorClass = "bg-amber-100 text-amber-800 border-amber-200 font-bold";
             }
 
-            return `<span class="${colorClass} border px-2 py-0.5 rounded text-[11px] inline-flex items-center space-x-1">
-                <i data-lucide="clock" class="w-3 h-3"></i><span>Scadenza: ${deadlineStr}</span>
+            return `<span class="${colorClass} border px-2 py-0.5 rounded text-[10px] inline-flex items-center space-x-1">
+                <i data-lucide="clock" class="w-3 h-3"></i><span>${deadlineStr}</span>
             </span>`;
-        }
-
-        function allowDrop(ev) { ev.preventDefault(); if (ev.currentTarget) ev.currentTarget.classList.add('drag-over'); }
-        function clearDropStyle(ev) { if (ev.currentTarget) ev.currentTarget.classList.remove('drag-over'); }
-        
-        function handleDragStart(ev, taskId) { 
-            draggedTaskId = taskId; 
-            try {
-                ev.dataTransfer.setData("text/plain", taskId);
-            } catch(e){}
-        }
-
-        async function handleDrop(ev, newStatus) {
-            ev.preventDefault(); clearDropStyle(ev);
-            const taskId = draggedTaskId || (ev.dataTransfer ? ev.dataTransfer.getData("text/plain") : null);
-            if (taskId) {
-                await updateTaskStatus(taskId, newStatus);
-                draggedTaskId = null;
-            }
-        }
-
-        async function handleDropWeek(ev, weekNum) {
-            ev.preventDefault(); clearDropStyle(ev);
-            const taskId = draggedTaskId || (ev.dataTransfer ? ev.dataTransfer.getData("text/plain") : null);
-            if (taskId) {
-                await supabaseClient.from('tasks').update({ week: weekNum }).eq('id', taskId);
-                draggedTaskId = null;
-                await loadTasksFromCloud();
-            }
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -692,7 +665,7 @@
             loadTasksFromCloud();
         }
 
-        // MOSTRA TUTTI I TASK CHE NON HANNO UNA SETTIMANA ASSEGNATA (week è null, 0 o undefined)
+        // MOSTRA TUTTI I TASK LIBERI SENZA LIMITI RIGIDI (Accetta week == null, 0, undefined o non numerico)
         function openAssignWeekModal(weekNum) {
             document.getElementById('assign-week-num').value = weekNum;
             document.getElementById('assign-week-label').innerText = 'Settimana ' + weekNum;
@@ -700,11 +673,11 @@
             const select = document.getElementById('unassigned-task-select');
 
             const unassigned = tasksList.filter(function(t) {
-                return t.week === null || t.week === undefined || t.week == 0 || t.week == "";
+                return !t.week || t.week == 0 || t.week == "0";
             });
 
             if (unassigned.length === 0) {
-                select.innerHTML = '<option value="">Tutti i tuoi task sono già stati assegnati!</option>';
+                select.innerHTML = '<option value="">Tutti i tuoi task sono già assegnati alle settimane!</option>';
             } else {
                 select.innerHTML = unassigned.map(function(t) {
                     const statusLabel = t.status === 'completato' ? ' [COMPLETATO]' : '';
@@ -723,6 +696,11 @@
 
             await supabaseClient.from('tasks').update({ week: weekNum }).eq('id', taskId);
             closeModal('assign-week-task-modal');
+            await loadTasksFromCloud();
+        }
+
+        async function moveTaskToWeek(taskId, newWeek) {
+            await supabaseClient.from('tasks').update({ week: newWeek }).eq('id', taskId);
             await loadTasksFromCloud();
         }
 
@@ -794,13 +772,11 @@
             const searchText = document.getElementById('filter-search') ? document.getElementById('filter-search').value.toLowerCase() : '';
             const typeFilter = document.getElementById('filter-type') ? document.getElementById('filter-type').value : 'all';
             const projFilter = document.getElementById('filter-project') ? document.getElementById('filter-project').value : 'all';
-            const sizeFilter = document.getElementById('filter-size') ? document.getElementById('filter-size').value : 'all';
 
             let filtered = tasksList;
             if (searchText) filtered = filtered.filter(function(t) { return t.title.toLowerCase().includes(searchText); });
             if (typeFilter !== 'all') filtered = filtered.filter(function(t) { return Array.isArray(t.types) && t.types.includes(typeFilter); });
             if (projFilter !== 'all') filtered = filtered.filter(function(t) { return (t.project || 'Generale') === projFilter; });
-            if (sizeFilter !== 'all') filtered = filtered.filter(function(t) { return (t.size || 'M') === sizeFilter; });
 
             if (filtered.length === 0) {
                 container.innerHTML = '<div class="p-8 text-center text-gray-400">Nessun task corrisponde ai criteri di ricerca.</div>';
@@ -811,27 +787,27 @@
                 const types = Array.isArray(t.types) ? t.types : [];
                 const typeBadges = types.map(function(tp) {
                     const info = typeIcons[tp];
-                    return info ? '<span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[11px] font-medium flex items-center space-x-1"><i data-lucide="' + info.icon + '" class="w-3 h-3"></i><span>' + info.label + '</span></span>' : '';
+                    return info ? '<span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[10px] font-medium flex items-center space-x-1"><i data-lucide="' + info.icon + '" class="w-3 h-3"></i><span>' + info.label + '</span></span>' : '';
                 }).join('');
 
-                return '<div class="p-4 flex items-center justify-between hover:bg-slate-50 transition">' +
-                    '<div class="flex items-center space-x-3">' +
-                        '<input type="checkbox" ' + (t.status === 'completato' ? 'checked' : '') + ' onclick="updateTaskStatus(\'' + t.id + '\', \'' + (t.status === 'completato' ? 'in_corso' : 'completato') + '\')" class="w-5 h-5 text-blue-600 rounded border-gray-300 cursor-pointer">' +
-                        '<div>' +
+                return '<div class="p-3 sm:p-4 flex items-center justify-between hover:bg-slate-50 transition">' +
+                    '<div class="flex items-center space-x-3 truncate">' +
+                        '<input type="checkbox" ' + (t.status === 'completato' ? 'checked' : '') + ' onclick="updateTaskStatus(\'' + t.id + '\', \'' + (t.status === 'completato' ? 'in_corso' : 'completato') + '\')" class="w-5 h-5 text-blue-600 rounded border-gray-300 cursor-pointer flex-shrink-0">' +
+                        '<div class="truncate">' +
                             '<div class="flex items-center space-x-2 flex-wrap gap-1">' +
-                                '<p class="font-medium ' + (t.status === 'completato' ? 'line-through text-gray-400' : 'text-gray-900') + '">' + t.title + '</p>' +
-                                '<span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-xs">' + (t.size || 'M') + '</span>' +
+                                '<p class="font-medium text-sm ' + (t.status === 'completato' ? 'line-through text-gray-400' : 'text-gray-900') + '">' + t.title + '</p>' +
+                                '<span class="bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded text-[10px]">' + (t.size || 'M') + '</span>' +
                                 getDeadlineBadge(t.deadline) +
                             '</div>' +
-                            '<div class="flex items-center space-x-2 text-xs text-gray-500 mt-1">' +
-                                '<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium">' + (t.project || 'Generale') + '</span>' +
+                            '<div class="flex items-center space-x-1.5 text-xs text-gray-500 mt-1 flex-wrap gap-1">' +
+                                '<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium text-[10px]">' + (t.project || 'Generale') + '</span>' +
                                 typeBadges +
                             '</div>' +
                         '</div>' +
                     '</div>' +
-                    '<div class="flex items-center space-x-2">' +
-                        '<button onclick="openEditModal(\'' + t.id + '\')" class="text-gray-400 hover:text-blue-600 p-1" title="Modifica"><i data-lucide="pencil" class="w-4 h-4"></i></button>' +
-                        '<button onclick="deleteTask(\'' + t.id + '\')" class="text-gray-400 hover:text-red-500 p-1" title="Elimina"><i data-lucide="trash-2" class="w-4 h-4"></i></button>' +
+                    '<div class="flex items-center space-x-1 flex-shrink-0 ml-2">' +
+                        '<button onclick="openEditModal(\'' + t.id + '\')" class="text-gray-400 hover:text-blue-600 p-1.5" title="Modifica"><i data-lucide="pencil" class="w-4 h-4"></i></button>' +
+                        '<button onclick="deleteTask(\'' + t.id + '\')" class="text-gray-400 hover:text-red-500 p-1.5" title="Elimina"><i data-lucide="trash-2" class="w-4 h-4"></i></button>' +
                     '</div>' +
                 '</div>';
             }).join('');
@@ -849,12 +825,12 @@
                 if (countBadge) countBadge.innerText = items.length;
 
                 if (items.length === 0) {
-                    container.innerHTML = '<p class="text-xs text-gray-400 p-3 text-center border border-dashed rounded-lg">Trascina un task qui</p>';
+                    container.innerHTML = '<p class="text-xs text-gray-400 p-3 text-center border border-dashed rounded-lg">Nessun task</p>';
                     return;
                 }
 
                 container.innerHTML = items.map(function(t) {
-                    return '<div draggable="true" ondragstart="handleDragStart(event, \'' + t.id + '\')" class="bg-white p-3 rounded-lg border shadow-sm space-y-2 cursor-grab active:cursor-grabbing hover:border-blue-400 transition">' +
+                    return '<div class="bg-white p-3 rounded-lg border shadow-sm space-y-2">' +
                         '<div class="flex justify-between items-start">' +
                             '<p class="text-sm font-semibold text-gray-800">' + t.title + '</p>' +
                             '<span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-1.5 py-0.5 rounded">' + (t.size || 'M') + '</span>' +
@@ -868,6 +844,7 @@
             });
         }
 
+        // RENDERING PROGRAMMA SETTIMANALE TOUCH-FRIENDLY
         function renderProgram() {
             const container = document.getElementById('program-weeks-container');
             if (!container) return;
@@ -879,7 +856,7 @@
                 weeksData.push(getISOWeekInfo(targetDate));
             }
 
-            container.innerHTML = weeksData.map(function(wInfo) {
+            container.innerHTML = weeksData.map(function(wInfo, idx) {
                 const wTasks = tasksList.filter(function(t) { 
                     if (t.deadline) {
                         return getISOWeekInfo(new Date(t.deadline)).weekNum == wInfo.weekNum;
@@ -892,35 +869,41 @@
                     const bgClass = isCompleted ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200';
                     const statusBadge = isCompleted ? '<span class="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">FATTO</span>' : '<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">IN CORSO</span>';
 
-                    return '<div draggable="true" ondragstart="handleDragStart(event, \'' + t.id + '\')" class="' + bgClass + ' p-3 rounded-lg border shadow-sm flex justify-between items-center cursor-grab hover:border-blue-500 transition">' +
-                        '<div class="flex items-center space-x-2">' +
+                    const nextWeekNum = weeksData[idx + 1] ? weeksData[idx + 1].weekNum : (wInfo.weekNum + 1);
+                    const prevWeekNum = weeksData[idx - 1] ? weeksData[idx - 1].weekNum : (wInfo.weekNum - 1);
+
+                    return '<div class="' + bgClass + ' p-3 rounded-lg border shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">' +
+                        '<div class="flex items-center space-x-2 truncate">' +
                             '<span class="font-medium text-sm ' + (isCompleted ? 'line-through text-gray-500' : 'text-gray-800') + '">' + t.title + '</span>' +
                             '<span class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-medium">' + (t.project || 'Generale') + '</span>' +
                         '</div>' +
-                        '<div class="flex items-center space-x-2">' +
+                        '<div class="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-2 sm:pt-0">' +
                             statusBadge +
                             getDeadlineBadge(t.deadline) +
                             '<span class="bg-purple-100 text-purple-800 text-xs font-bold px-2 py-0.5 rounded">' + (t.size || 'M') + '</span>' +
-                            '<button onclick="removeTaskFromWeek(\'' + t.id + '\')" class="text-gray-400 hover:text-red-500 ml-1" title="Rimuovi da questa settimana">❌</button>' +
+                            '<div class="flex items-center space-x-1 pl-2 border-l">' +
+                                '<button onclick="moveTaskToWeek(\'' + t.id + '\', ' + nextWeekNum + ')" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded" title="Sposta alla settimana successiva">➡️️</button>' +
+                                '<button onclick="removeTaskFromWeek(\'' + t.id + '\')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1 rounded" title="Rimuovi da questa settimana">❌</button>' +
+                            '</div>' +
                         '</div>' +
                     '</div>';
                 }).join('');
 
-                return '<div ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDropWeek(event, ' + wInfo.weekNum + ')" class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-3">' +
-                    '<div class="flex justify-between items-center border-b pb-2">' +
+                return '<div class="bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm space-y-3">' +
+                    '<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-2 gap-2">' +
                         '<div>' +
                             '<h3 class="font-bold text-gray-800 text-base">Settimana ' + wInfo.weekNum + '</h3>' +
                             '<p class="text-xs text-blue-600 font-medium">Lunedì - Venerdì: ' + wInfo.rangeStr + '</p>' +
                         '</div>' +
-                        '<div class="flex items-center space-x-3">' +
+                        '<div class="flex items-center justify-between w-full sm:w-auto space-x-3">' +
                             '<span class="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full font-bold">' + wTasks.length + ' Task</span>' +
                             '<button onclick="openAssignWeekModal(' + wInfo.weekNum + ')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-medium transition flex items-center space-x-1">' +
-                                '<span>+ Assegna Task Esistente</span>' +
+                                '<span>+ Assegna Task</span>' +
                             '</button>' +
                         '</div>' +
                     '</div>' +
-                    '<div class="space-y-2 min-h-[80px] bg-slate-50 p-3 rounded-lg border border-dashed border-gray-200">' +
-                        (taskItems || '<p class="text-xs text-gray-400 text-center py-2">Nessun task assegnato a questa settimana. Fai clic su "+ Assegna Task Esistente" o trascinalo qui.</p>') +
+                    '<div class="space-y-2 min-h-[60px] bg-slate-50 p-2.5 rounded-lg border border-dashed border-gray-200">' +
+                        (taskItems || '<p class="text-xs text-gray-400 text-center py-2">Nessun task assegnato a questa settimana. Tocca "+ Assegna Task".</p>') +
                     '</div>' +
                 '</div>';
             }).join('');
@@ -939,14 +922,14 @@
             container.innerHTML = projects.map(function(p) {
                 const projTasks = tasksList.filter(function(t) { return (t.project || 'Generale') === p; });
                 const taskItems = projTasks.map(function(t) {
-                    return '<div class="ml-6 py-2 border-l-2 border-slate-200 pl-4 flex items-center justify-between">' +
-                        '<div class="flex items-center space-x-2">' +
+                    return '<div class="ml-4 sm:ml-6 py-2 border-l-2 border-slate-200 pl-3 sm:pl-4 flex items-center justify-between">' +
+                        '<div class="flex items-center space-x-2 truncate">' +
                             '<span class="w-2 h-2 rounded-full ' + (t.status === 'completato' ? 'bg-green-500' : 'bg-blue-500') + '"></span>' +
-                            '<span class="text-sm ' + (t.status === 'completato' ? 'line-through text-gray-400' : 'text-gray-800') + '">' + t.title + '</span>' +
+                            '<span class="text-xs sm:text-sm ' + (t.status === 'completato' ? 'line-through text-gray-400' : 'text-gray-800') + '">' + t.title + '</span>' +
                         '</div>' +
-                        '<div class="flex items-center space-x-2">' +
+                        '<div class="flex items-center space-x-2 flex-shrink-0 ml-2">' +
                             getDeadlineBadge(t.deadline) +
-                            '<span class="bg-purple-50 text-purple-700 font-bold px-2 py-0.5 rounded text-xs">Effort: ' + (t.size || 'M') + '</span>' +
+                            '<span class="bg-purple-50 text-purple-700 font-bold px-2 py-0.5 rounded text-[10px]">Effort: ' + (t.size || 'M') + '</span>' +
                         '</div>' +
                     '</div>';
                 }).join('');
@@ -955,7 +938,7 @@
                     '<div class="flex items-center justify-between">' +
                         '<div class="flex items-center space-x-2">' +
                             '<i data-lucide="folder" class="w-5 h-5 text-blue-600"></i>' +
-                            '<span class="font-bold text-gray-900 text-base">' + p + '</span>' +
+                            '<span class="font-bold text-gray-900 text-sm sm:text-base">' + p + '</span>' +
                         '</div>' +
                         '<span class="text-xs bg-gray-200 text-gray-700 font-bold px-2.5 py-1 rounded-full">' + projTasks.length + ' Attività</span>' +
                     '</div>' +
@@ -1073,6 +1056,13 @@
             const activeNav = document.getElementById('nav-' + tabName);
             if (activeTab) activeTab.classList.remove('hidden');
             if (activeNav) activeNav.classList.add('sidebar-item-active');
+
+            // Chiudi il menu mobile dopo il click
+            const sidebar = document.getElementById('sidebar-menu');
+            if (window.innerWidth < 768 && sidebar) {
+                sidebar.classList.add('hidden');
+                sidebar.classList.remove('flex');
+            }
 
             if (tabName === 'admin') loadAdminUsers();
         }
