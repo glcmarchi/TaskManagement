@@ -262,12 +262,12 @@
                 </div>
             </div>
 
-            <!-- VISTA: PROGRAMMA SETTIMANALE REALETIME CON DATE E NUOVO PULSANTE AGGIUNGI TASK -->
+            <!-- VISTA: PROGRAMMA SETTIMANALE REALETIME CON ASSEGNAZIONE TASK ESISTENTI -->
             <div id="tab-program" class="p-8 space-y-6 hidden">
                 <div class="flex justify-between items-center">
                     <div>
                         <h2 class="text-2xl font-bold text-gray-900">Programma Settimanale Attività</h2>
-                        <p class="text-gray-500 text-sm">Pianifica le attività trascinandole o aggiungendole direttamente nella settimana target.</p>
+                        <p class="text-gray-500 text-sm">Assegna le tue attività esistenti alle settimane lavorative o trascinale col mouse.</p>
                     </div>
                 </div>
                 <div id="program-weeks-container" class="space-y-6"></div>
@@ -370,38 +370,25 @@
         </div>
     </div>
 
-    <!-- MODALE RAPIDO INSERIMENTO TASK IN SETTIMANA SPECIFICA -->
-    <div id="add-week-task-modal" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center hidden z-50">
+    <!-- MODALE ASSEGNAZIONE TASK ESISTENTE A SETTIMANA SPECIFICA -->
+    <div id="assign-week-task-modal" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center hidden z-50">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-bold text-gray-900 text-lg">Aggiungi Task in <span id="target-week-label" class="text-blue-600"></span></h3>
-                <button onclick="closeModal('add-week-task-modal')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x"></i></button>
+                <h3 class="font-bold text-gray-900 text-lg">Assegna Task a <span id="assign-week-label" class="text-blue-600"></span></h3>
+                <button onclick="closeModal('assign-week-task-modal')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x"></i></button>
             </div>
-            <input type="hidden" id="target-week-num">
+            <input type="hidden" id="assign-week-num">
             <div class="space-y-3">
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Titolo Task</label>
-                    <input id="week-task-title" type="text" placeholder="Nome dell'attività..." class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-sm outline-none focus:bg-white focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Progetto</label>
-                    <input id="week-task-project" type="text" placeholder="Generale" class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-sm outline-none focus:bg-white focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Taglia Effort</label>
-                    <select id="week-task-size" class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-sm outline-none">
-                        <option value="S">S</option>
-                        <option value="XS">XS</option>
-                        <option value="M" selected>M</option>
-                        <option value="L">L</option>
-                        <option value="XL">XL</option>
-                        <option value="XXL">XXL</option>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Seleziona un'attività tra quelle non assegnate:</label>
+                    <select id="unassigned-task-select" class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-sm outline-none focus:bg-white focus:border-blue-500 font-medium">
+                        <!-- Popolato via JS con i task non ancora assegnati -->
                     </select>
                 </div>
             </div>
             <div class="flex justify-end space-x-2 pt-3 border-t">
-                <button onclick="closeModal('add-week-task-modal')" class="px-4 py-2 border rounded-lg text-sm font-medium">Annulla</button>
-                <button onclick="saveWeekTask()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Aggiungi alla Settimana</button>
+                <button onclick="closeModal('assign-week-task-modal')" class="px-4 py-2 border rounded-lg text-sm font-medium">Annulla</button>
+                <button onclick="confirmAssignTaskToWeek()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Conferma Allocazione</button>
             </div>
         </div>
     </div>
@@ -661,32 +648,45 @@
             loadTasksFromCloud();
         }
 
-        function openAddWeekModal(weekNum) {
-            document.getElementById('target-week-num').value = weekNum;
-            document.getElementById('target-week-label').innerText = 'Settimana ' + weekNum;
-            document.getElementById('week-task-title').value = '';
-            document.getElementById('week-task-project').value = '';
-            openModal('add-week-task-modal');
+        // APERTURA MODALE PER ASSEGNARE TASK ESISTENTE ALLA SETTIMANA
+        function openAssignWeekModal(weekNum) {
+            document.getElementById('assign-week-num').value = weekNum;
+            document.getElementById('assign-week-label').innerText = 'Settimana ' + weekNum;
+
+            const select = document.getElementById('unassigned-task-select');
+            
+            // Filtra solo i task non ancora assegnati ad alcuna settimana o senza deadline
+            const unassigned = tasksList.filter(function(t) {
+                if (t.deadline) {
+                    return getISOWeekInfo(new Date(t.deadline)).weekNum != weekNum && !t.week;
+                }
+                return !t.week || t.week == 0;
+            });
+
+            if (unassigned.length === 0) {
+                select.innerHTML = '<option value="">Nessun task disponibile per l allocazione</option>';
+            } else {
+                select.innerHTML = unassigned.map(function(t) {
+                    return '<option value="' + t.id + '">' + t.title + ' (' + (t.project || 'Generale') + ' - Effort: ' + (t.size||'M') + ')</option>';
+                }).join('');
+            }
+
+            openModal('assign-week-task-modal');
         }
 
-        async function saveWeekTask() {
-            const weekNum = parseInt(document.getElementById('target-week-num').value);
-            const title = document.getElementById('week-task-title').value.trim();
-            const project = document.getElementById('week-task-project').value.trim() || 'Generale';
-            const size = document.getElementById('week-task-size').value;
+        async function confirmAssignTaskToWeek() {
+            const taskId = document.getElementById('unassigned-task-select').value;
+            const weekNum = parseInt(document.getElementById('assign-week-num').value);
 
-            if (!title) return;
+            if (!taskId) return;
 
-            await supabaseClient.from('tasks').insert([{
-                title: title,
-                project: project,
-                size: size,
-                week: weekNum,
-                status: 'in_corso',
-                assigned_email: currentUser.email
-            }]);
+            await supabaseClient.from('tasks').update({ week: weekNum }).eq('id', taskId);
+            closeModal('assign-week-task-modal');
+            loadTasksFromCloud();
+        }
 
-            closeModal('add-week-task-modal');
+        async function removeTaskFromWeek(taskId) {
+            await supabaseClient.from('tasks').update({ week: null, deadline: null }).eq('id', taskId);
             loadTasksFromCloud();
         }
 
@@ -819,7 +819,6 @@
             }
 
             container.innerHTML = weeksData.map(function(wInfo) {
-                // Assegnazione automatica: se il task ha una deadline o una week impostata per questa settimana
                 const wTasks = tasksList.filter(function(t) { 
                     if (t.deadline) {
                         return getISOWeekInfo(new Date(t.deadline)).weekNum == wInfo.weekNum;
@@ -836,6 +835,7 @@
                         '<div class="flex items-center space-x-2">' +
                             getDeadlineBadge(t.deadline) +
                             '<span class="bg-purple-100 text-purple-800 text-xs font-bold px-2 py-0.5 rounded">' + (t.size || 'M') + '</span>' +
+                            '<button onclick="removeTaskFromWeek(\'' + t.id + '\')" class="text-gray-400 hover:text-red-500 ml-1" title="Rimuovi da questa settimana">❌</button>' +
                         '</div>' +
                     '</div>';
                 }).join('');
@@ -848,13 +848,13 @@
                         '</div>' +
                         '<div class="flex items-center space-x-3">' +
                             '<span class="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full font-bold">' + wTasks.length + ' Task</span>' +
-                            '<button onclick="openAddWeekModal(' + wInfo.weekNum + ')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-medium transition flex items-center space-x-1">' +
-                                '<span>+ Aggiungi Task</span>' +
+                            '<button onclick="openAssignWeekModal(' + wInfo.weekNum + ')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-medium transition flex items-center space-x-1">' +
+                                '<span>+ Assegna Task Esistente</span>' +
                             '</button>' +
                         '</div>' +
                     '</div>' +
                     '<div class="space-y-2 min-h-[80px] bg-slate-50 p-3 rounded-lg border border-dashed border-gray-200">' +
-                        (taskItems || '<p class="text-xs text-gray-400 text-center py-2">Trascina un task qui o usa "+ Aggiungi Task"</p>') +
+                        (taskItems || '<p class="text-xs text-gray-400 text-center py-2">Nessun task assegnato a questa settimana</p>') +
                     '</div>' +
                 '</div>';
             }).join('');
