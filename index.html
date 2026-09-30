@@ -11,17 +11,42 @@
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .sidebar-item-active {
-            background-color: #3b82f6;
-            color: white;
-        }
+        .sidebar-item-active { background-color: #3b82f6; color: white; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800 antialiased">
 
-    <!-- MAIN APP STRUCTURE -->
-    <div class="flex h-screen overflow-hidden">
-        
+    <!-- SCHERMATA LOGIN GOOGLE -->
+    <div id="login-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center space-y-6">
+            <div class="inline-flex bg-blue-600 text-white p-3 rounded-xl mb-2">
+                <i data-lucide="layers" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900">TaskNexus Workspace</h2>
+            <p class="text-sm text-gray-500">Accedi con il tuo account Google per gestire i tuoi task e collaborare in sicurezza.</p>
+            
+            <button onclick="loginWithGoogle()" class="w-full flex items-center justify-center space-x-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-xl shadow-sm transition">
+                <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                <span>Accedi con Google</span>
+            </button>
+            <div id="login-error" class="text-xs text-red-500 hidden font-medium"></div>
+        </div>
+    </div>
+
+    <!-- SCHERMATA UTENTE IN ATTESA -->
+    <div id="pending-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center space-y-4">
+            <div class="inline-flex bg-amber-100 text-amber-600 p-3 rounded-full">
+                <i data-lucide="clock" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900">Richiesta in Attesa</h2>
+            <p class="text-sm text-gray-600">Il tuo account (<span id="pending-email" class="font-bold"></span>) è stato registrato. L'amministratore deve approvare il tuo accesso prima che tu possa accedere al workspace.</p>
+            <button onclick="logout()" class="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-gray-50">Disconnetti</button>
+        </div>
+    </div>
+
+    <!-- APP PRINCIPALE -->
+    <div id="app-screen" class="flex h-screen overflow-hidden hidden">
         <!-- SIDEBAR -->
         <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between p-4 flex-shrink-0">
             <div>
@@ -29,7 +54,7 @@
                     <div class="bg-blue-600 text-white p-2 rounded-lg"><i data-lucide="layers"></i></div>
                     <div>
                         <h1 class="font-bold text-white text-lg leading-none">TaskNexus</h1>
-                        <span class="text-xs text-slate-400">Workspace Personale</span>
+                        <span class="text-xs text-slate-400" id="workspace-label">Workspace Attivo</span>
                     </div>
                 </div>
 
@@ -42,38 +67,36 @@
                         <i data-lucide="gantt-chart" class="w-5 h-5"></i>
                         <span>Vista Gantt</span>
                     </button>
-                    <button onclick="switchTab('admin')" id="nav-admin" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
+                    <button onclick="switchTab('admin')" id="nav-admin" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 hidden">
                         <i data-lucide="shield-check" class="w-5 h-5"></i>
                         <span>Consola Admin</span>
                     </button>
                 </nav>
             </div>
 
-            <!-- PROFILE -->
+            <!-- PROFILE FOOTER -->
             <div class="pt-4 border-t border-slate-800 flex items-center justify-between px-2">
                 <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold text-white text-sm">
-                        M
-                    </div>
+                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold text-white text-sm" id="user-avatar">U</div>
                     <div class="text-xs">
-                        <p class="font-medium text-white truncate w-28">Utente Admin</p>
-                        <p class="text-slate-400">Online</p>
+                        <p class="font-medium text-white truncate w-28" id="user-email">email@test.com</p>
+                        <p class="text-slate-400" id="user-role-label">Utente</p>
                     </div>
                 </div>
+                <button onclick="logout()" class="text-slate-400 hover:text-white" title="Disconnetti"><i data-lucide="log-out" class="w-4 h-4"></i></button>
             </div>
         </aside>
 
-        <!-- MAIN CONTENT AREA -->
+        <!-- AREA CONTENUTO PRINCIPALE -->
         <main class="flex-1 bg-slate-50 flex flex-col overflow-y-auto">
-            
-            <!-- TOP BAR / QUICK DATA ENTRY -->
+            <!-- HEADER CON DATA ENTRY RAPIDO -->
             <header class="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
                 <form onsubmit="addTask(event)" class="flex items-center space-x-4 flex-1 max-w-2xl">
                     <div class="relative w-full">
                         <i data-lucide="plus-circle" class="w-5 h-5 absolute left-3 top-2.5 text-gray-400"></i>
                         <input id="task-input" type="text" placeholder="Scrivi un nuovo task e premi Invio..." class="w-full pl-10 pr-4 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-sm outline-none transition" required>
                     </div>
-                    <input id="project-input" type="text" placeholder="Progetto (opzionale)" class="w-48 px-3 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-sm outline-none transition">
+                    <input id="project-input" type="text" placeholder="Progetto" class="w-48 px-3 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-sm outline-none transition">
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">Aggiungi</button>
                 </form>
                 <button onclick="openModal('report-modal')" class="flex items-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm ml-4">
@@ -86,13 +109,12 @@
             <div id="tab-focus" class="p-8 space-y-6">
                 <div>
                     <h2 class="text-2xl font-bold text-gray-900">Cosa devo fare Oggi?</h2>
-                    <p class="text-gray-500 text-sm">Gestione reattiva e salvataggio automatico.</p>
+                    <p class="text-gray-500 text-sm">Dashboard personale e dei task assegnati sincronizzata in Cloud.</p>
                 </div>
 
-                <!-- CONTATORI REALI -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-blue-500">
-                        <div class="text-xs font-semibold text-gray-400 uppercase">Task In Corso</div>
+                        <div class="text-xs font-semibold text-gray-400 uppercase">In Corso</div>
                         <div class="text-3xl font-bold text-gray-900 mt-1" id="count-in-corso">0</div>
                     </div>
                     <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-amber-500">
@@ -105,14 +127,9 @@
                     </div>
                 </div>
 
-                <!-- LISTA TASK DINAMICA -->
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
-                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                        <h3 class="font-bold text-gray-800">Coda di Lavorazione</h3>
-                    </div>
-                    <div class="divide-y divide-gray-100" id="tasks-container">
-                        <!-- Popolato via JS -->
-                    </div>
+                    <div class="px-6 py-4 border-b border-gray-100 font-bold text-gray-800">Coda di Lavorazione</div>
+                    <div class="divide-y divide-gray-100" id="tasks-container"></div>
                 </div>
             </div>
 
@@ -120,33 +137,31 @@
             <div id="tab-gantt" class="p-8 space-y-6 hidden">
                 <h2 class="text-2xl font-bold text-gray-900">Vista Gantt Semplificata</h2>
                 <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <p class="text-gray-500 text-sm mb-4">I tuoi progetti attivi distribuiti nella settimana:</p>
                     <div id="gantt-container" class="space-y-3"></div>
                 </div>
             </div>
 
-            <!-- VISTA: ADMIN -->
+            <!-- VISTA: CONSOLA ADMIN -->
             <div id="tab-admin" class="p-8 space-y-6 hidden">
                 <h2 class="text-2xl font-bold text-gray-900">Consola Amministrazione Workspace</h2>
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
-                    <h3 class="font-bold text-gray-800">Membri del Workspace & Permessi</h3>
-                    <p class="text-sm text-gray-500">Gestisci la visibilità per il collaboratore e assegna i ruoli di accesso.</p>
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
+                    <h3 class="font-bold text-gray-800 text-lg">Richieste Accesso Utenti & Gestione Permessi</h3>
+                    <div id="users-admin-list" class="divide-y divide-gray-100">
+                        <p class="text-gray-400 text-sm">Caricamento utenti...</p>
+                    </div>
                 </div>
             </div>
-
         </main>
     </div>
 
-    <!-- MODALE REPORT -->
+    <!-- MODALE REPORT CAPO -->
     <div id="report-modal" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center hidden z-50">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4">
             <div class="flex justify-between items-center border-b pb-3">
                 <h3 class="font-bold text-gray-900 text-lg">Sintesi Report Lavoro per il Capo</h3>
                 <button onclick="closeModal('report-modal')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x"></i></button>
             </div>
-            <div class="bg-gray-50 p-4 rounded-lg text-xs font-mono text-gray-800 space-y-2" id="report-content">
-                Generazione report...
-            </div>
+            <div class="bg-gray-50 p-4 rounded-lg text-xs font-mono text-gray-800 space-y-2 whitespace-pre-wrap" id="report-content"></div>
             <div class="flex justify-end space-x-2 pt-2">
                 <button onclick="closeModal('report-modal')" class="px-4 py-2 border rounded-lg text-sm font-medium">Chiudi</button>
                 <button onclick="copyReport()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Copia per Email</button>
@@ -154,33 +169,91 @@
         </div>
     </div>
 
-    <!-- LOGICA DI SCRIPT CON CORREZIONE NOME VARIABILE -->
+    <!-- LOGICA DI SCRIPT & CONNESIONE SUPABASE -->
     <script>
-        // INSERISCI QUI I DATI REALI SE VUOI IL DATABASE SUPABASE CLOUD
-        const SUPABASE_URL = "INSERISCI_URL_QUI";
-        const SUPABASE_ANON_KEY = "INSERISCI_KEY_QUI";
+        const SUPABASE_URL = "https://fpnetrdboqanxfeemajg.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_2H6o6gTA4lBy4RlG50p1eQ_iPp03lY6";
         
         let supabaseClient = null;
-        if (typeof window.supabase !== 'undefined' && SUPABASE_URL.startsWith("https://")) {
+        if (typeof window.supabase !== 'undefined' && SUPABASE_ANON_KEY !== "INSERISCI_QUI_LA_TUA_PUBLISHABLE_KEY") {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 
-        // Se Supabase non è configurato, usa il salvataggio nel browser
-        let tasksList = JSON.parse(localStorage.getItem('nexus_tasks') || '[]');
+        let currentUser = null;
+        let currentProfile = null;
+        let tasksList = [];
 
         window.onload = async () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
-            if (supabaseClient) {
-                await loadTasksFromCloud();
+            
+            if (!supabaseClient) {
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('login-error').innerText = "Incolla la tua Publishable Key nel file HTML per attivare il Login Google e il Cloud!";
+                document.getElementById('login-error').classList.remove('hidden');
+                return;
+            }
+
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                await checkUserProfile();
             } else {
-                renderTasks();
-                updateCounters();
-                renderGantt();
+                document.getElementById('login-screen').classList.remove('hidden');
             }
         };
 
+        async function loginWithGoogle() {
+            if(!supabaseClient) return;
+            await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: { redirectTo: window.location.href }
+            });
+        }
+
+        async function logout() {
+            if(supabaseClient) await supabaseClient.auth.signOut();
+            location.reload();
+        }
+
+        async function checkUserProfile() {
+            const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
+            
+            if (data) {
+                currentProfile = data;
+                if (currentProfile.status === 'approvato') {
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('pending-screen').classList.add('hidden');
+                    document.getElementById('app-screen').classList.remove('hidden');
+                    
+                    document.getElementById('user-email').innerText = currentUser.email;
+                    document.getElementById('user-avatar').innerText = currentUser.email[0].toUpperCase();
+                    document.getElementById('user-role-label').innerText = currentProfile.role.toUpperCase();
+
+                    if (currentProfile.role === 'admin') {
+                        document.getElementById('nav-admin').classList.remove('hidden');
+                    }
+
+                    loadTasksFromCloud();
+                } else {
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('pending-email').innerText = currentUser.email;
+                    document.getElementById('pending-screen').classList.remove('hidden');
+                }
+            } else {
+                // Se il profilo non esiste ancora nel DB, riprova tra 1 secondo (attende la creazione del trigger SQL)
+                setTimeout(checkUserProfile, 1000);
+            }
+        }
+
         async function loadTasksFromCloud() {
-            const { data, error } = await supabaseClient.from('tasks').select('*').order('created_at', { ascending: false });
+            let query = supabaseClient.from('tasks').select('*').order('created_at', { ascending: false });
+            
+            // Se l'utente è un semplice collaboratore, vede solo le cose sue
+            if (currentProfile && currentProfile.role !== 'admin') {
+                query = query.eq('assigned_email', currentUser.email);
+            }
+
+            const { data, error } = await query;
             if(!error && data) {
                 tasksList = data;
                 renderTasks();
@@ -196,64 +269,33 @@
 
             if(!titleInput.value.trim()) return;
 
-            const newTask = {
-                id: Date.now().toString(),
+            await supabaseClient.from('tasks').insert([{
                 title: titleInput.value.trim(),
                 project: projectInput.value.trim() || 'Generale',
                 status: 'in_corso',
-                created_at: new Date().toISOString()
-            };
-
-            if(supabaseClient) {
-                await supabaseClient.from('tasks').insert([{
-                    title: newTask.title,
-                    project: newTask.project,
-                    status: 'in_corso'
-                }]);
-                await loadTasksFromCloud();
-            } else {
-                tasksList.unshift(newTask);
-                saveLocal();
-            }
+                assigned_email: currentUser.email
+            }]);
 
             titleInput.value = '';
             projectInput.value = '';
+            loadTasksFromCloud();
         }
 
         async function toggleTaskStatus(id, currentStatus) {
             const nextStatus = currentStatus === 'completato' ? 'in_corso' : 'completato';
-            
-            if(supabaseClient) {
-                await supabaseClient.from('tasks').update({ status: nextStatus }).eq('id', id);
-                await loadTasksFromCloud();
-            } else {
-                const task = tasksList.find(t => t.id == id);
-                if(task) task.status = nextStatus;
-                saveLocal();
-            }
+            await supabaseClient.from('tasks').update({ status: nextStatus }).eq('id', id);
+            loadTasksFromCloud();
         }
 
         async function deleteTask(id) {
-            if(supabaseClient) {
-                await supabaseClient.from('tasks').delete().eq('id', id);
-                await loadTasksFromCloud();
-            } else {
-                tasksList = tasksList.filter(t => t.id != id);
-                saveLocal();
-            }
-        }
-
-        function saveLocal() {
-            localStorage.setItem('nexus_tasks', JSON.stringify(tasksList));
-            renderTasks();
-            updateCounters();
-            renderGantt();
+            await supabaseClient.from('tasks').delete().eq('id', id);
+            loadTasksFromCloud();
         }
 
         function renderTasks() {
             const container = document.getElementById('tasks-container');
             if(tasksList.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">Nessun task presente. Digita un'attività in alto e premi Invio!</div>`;
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">Nessun task presente in coda.</div>`;
                 return;
             }
 
@@ -265,6 +307,7 @@
                             <p class="font-medium ${t.status === 'completato' ? 'line-through text-gray-400' : 'text-gray-900'}">${t.title}</p>
                             <div class="flex items-center space-x-2 text-xs text-gray-500 mt-0.5">
                                 <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium">${t.project}</span>
+                                ${t.assigned_email ? `<span>• Assegnato a: ${t.assigned_email}</span>` : ''}
                             </div>
                         </div>
                     </div>
@@ -287,7 +330,7 @@
             const container = document.getElementById('gantt-container');
             const projects = [...new Set(tasksList.map(t => t.project))];
             if(projects.length === 0) {
-                container.innerHTML = '<p class="text-sm text-gray-400">Nessun progetto attivo inserito.</p>';
+                container.innerHTML = '<p class="text-sm text-gray-400">Nessun progetto attivo.</p>';
                 return;
             }
 
@@ -304,10 +347,35 @@
             }).join('');
         }
 
+        async function loadAdminUsers() {
+            const { data } = await supabaseClient.from('profiles').select('*');
+            const container = document.getElementById('users-admin-list');
+            if(!data || data.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-400 py-4">Nessun utente registrato.</p>';
+                return;
+            }
+
+            container.innerHTML = data.map(u => `
+                <div class="py-3 flex items-center justify-between">
+                    <div>
+                        <p class="font-medium text-sm text-gray-900">${u.email}</p>
+                        <p class="text-xs text-gray-500">Ruolo: <span class="font-bold uppercase">${u.role}</span> | Stato: <span class="font-bold ${u.status === 'approvato' ? 'text-green-600' : 'text-amber-600'}">${u.status}</span></p>
+                    </div>
+                    ${u.status === 'in_attesa' ? `
+                        <button onclick="approveUser('${u.id}')" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1.5 rounded font-medium transition">Approva Accesso</button>
+                    ` : '<span class="text-xs bg-green-100 text-green-700 font-semibold px-2.5 py-1 rounded-full">Abilitato</span>'}
+                </div>
+            `).join('');
+        }
+
+        async function approveUser(userId) {
+            await supabaseClient.from('profiles').update({ status: 'approvato' }).eq('id', userId);
+            loadAdminUsers();
+        }
+
         function generateReport() {
             const completati = tasksList.filter(t => t.status === 'completato');
             const inCorso = tasksList.filter(t => t.status === 'in_corso');
-            
             return `OGGETTO: Aggiornamento Stato Attività\n\nAttività Completate:\n${completati.map(t => `- ${t.title} (${t.project})`).join('\n') || '- Nessuna'}\n\nIn Corso di Lavorazione:\n${inCorso.map(t => `- ${t.title} (${t.project})`).join('\n') || '- Nessuna'}`;
         }
 
@@ -318,6 +386,8 @@
             });
             document.getElementById(`tab-${tabName}`).classList.remove('hidden');
             document.getElementById(`nav-${tabName}`).classList.add('sidebar-item-active');
+
+            if(tabName === 'admin') loadAdminUsers();
         }
 
         function openModal(id) { 
