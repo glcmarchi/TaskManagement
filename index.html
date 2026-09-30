@@ -274,7 +274,7 @@
                 </div>
             </div>
 
-            <!-- VISTA: PROGRAMMA SETTIMANALE REALETIME -->
+            <!-- VISTA: PROGRAMMA SETTIMANALE REALETIME CON DRAG & DROP CORRETTO -->
             <div id="tab-program" class="p-8 space-y-6 hidden">
                 <div class="flex justify-between items-center">
                     <div>
@@ -481,14 +481,17 @@
 
         function allowDrop(ev) { ev.preventDefault(); if (ev.currentTarget) ev.currentTarget.classList.add('drag-over'); }
         function clearDropStyle(ev) { if (ev.currentTarget) ev.currentTarget.classList.remove('drag-over'); }
+        
         function handleDragStart(ev, taskId) { 
             draggedTaskId = taskId; 
-            ev.dataTransfer.setData("text/plain", taskId);
+            try {
+                ev.dataTransfer.setData("text/plain", taskId);
+            } catch(e){}
         }
 
         async function handleDrop(ev, newStatus) {
             ev.preventDefault(); clearDropStyle(ev);
-            const taskId = draggedTaskId || ev.dataTransfer.getData("text/plain");
+            const taskId = draggedTaskId || (ev.dataTransfer ? ev.dataTransfer.getData("text/plain") : null);
             if (taskId) {
                 await updateTaskStatus(taskId, newStatus);
                 draggedTaskId = null;
@@ -497,7 +500,7 @@
 
         async function handleDropWeek(ev, weekNum) {
             ev.preventDefault(); clearDropStyle(ev);
-            const taskId = draggedTaskId || ev.dataTransfer.getData("text/plain");
+            const taskId = draggedTaskId || (ev.dataTransfer ? ev.dataTransfer.getData("text/plain") : null);
             if (taskId) {
                 await supabaseClient.from('tasks').update({ week: weekNum }).eq('id', taskId);
                 draggedTaskId = null;
@@ -689,7 +692,7 @@
             loadTasksFromCloud();
         }
 
-        // MOSTRA TUTTI I TASK LIBERI (Qualsiasi task senza settimana o con week == null / 0 / undefined)
+        // MOSTRA TUTTI I TASK CHE NON HANNO UNA SETTIMANA ASSEGNATA (week è null, 0 o undefined)
         function openAssignWeekModal(weekNum) {
             document.getElementById('assign-week-num').value = weekNum;
             document.getElementById('assign-week-label').innerText = 'Settimana ' + weekNum;
@@ -697,11 +700,11 @@
             const select = document.getElementById('unassigned-task-select');
 
             const unassigned = tasksList.filter(function(t) {
-                return !t.week || t.week == 0;
+                return t.week === null || t.week === undefined || t.week == 0 || t.week == "";
             });
 
             if (unassigned.length === 0) {
-                select.innerHTML = '<option value="">Tutti i tuoi task sono già assegnati alle settimane!</option>';
+                select.innerHTML = '<option value="">Tutti i tuoi task sono già stati assegnati!</option>';
             } else {
                 select.innerHTML = unassigned.map(function(t) {
                     const statusLabel = t.status === 'completato' ? ' [COMPLETATO]' : '';
