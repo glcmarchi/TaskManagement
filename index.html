@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .sidebar-item-active { background-color: #3b82f6; color: white; }
+        .type-btn-active { background-color: #3b82f6; color: white; border-color: #2563eb; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800 antialiased">
@@ -63,6 +64,10 @@
                         <i data-lucide="zap" class="w-5 h-5"></i>
                         <span>Priorità Oggi</span>
                     </button>
+                    <button onclick="switchTab('projects')" id="nav-projects" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
+                        <i data-lucide="folder-tree" class="w-5 h-5"></i>
+                        <span>Progetti & Attività</span>
+                    </button>
                     <button onclick="switchTab('gantt')" id="nav-gantt" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800">
                         <i data-lucide="gantt-chart" class="w-5 h-5"></i>
                         <span>Vista Gantt</span>
@@ -89,20 +94,57 @@
 
         <!-- AREA CONTENUTO PRINCIPALE -->
         <main class="flex-1 bg-slate-50 flex flex-col overflow-y-auto">
-            <!-- HEADER CON DATA ENTRY RAPIDO -->
-            <header class="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
-                <form onsubmit="addTask(event)" class="flex items-center space-x-4 flex-1 max-w-2xl">
-                    <div class="relative w-full">
-                        <i data-lucide="plus-circle" class="w-5 h-5 absolute left-3 top-2.5 text-gray-400"></i>
-                        <input id="task-input" type="text" placeholder="Scrivi un nuovo task e premi Invio..." class="w-full pl-10 pr-4 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-sm outline-none transition" required>
+            <!-- HEADER CON DATA ENTRY RAPIDO E TAG TIPOLOGIA -->
+            <header class="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-10 space-y-3">
+                <form onsubmit="addTask(event)" class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="relative flex-1">
+                            <i data-lucide="plus-circle" class="w-5 h-5 absolute left-3 top-2.5 text-gray-400"></i>
+                            <input id="task-input" type="text" placeholder="Scrivi un nuovo task e premi Invio..." class="w-full pl-10 pr-4 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-sm outline-none transition" required>
+                        </div>
+                        <input id="project-input" type="text" placeholder="Progetto" class="w-40 px-3 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-sm outline-none transition">
+                        
+                        <!-- SELETTORE TAGLIA EFFORT -->
+                        <select id="size-input" class="w-28 px-3 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-sm outline-none transition font-semibold text-gray-700">
+                            <option value="S">Taglia: S</option>
+                            <option value="XS">Taglia: XS</option>
+                            <option value="M" selected>Taglia: M</option>
+                            <option value="L">Taglia: L</option>
+                            <option value="XL">Taglia: XL</option>
+                            <option value="XXL">Taglia: XXL</option>
+                        </select>
+
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-1">
+                            <span>Aggiungi</span>
+                        </button>
+                        <button type="button" onclick="openModal('report-modal')" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm">
+                            <span>Report Capo</span>
+                        </button>
                     </div>
-                    <input id="project-input" type="text" placeholder="Progetto" class="w-48 px-3 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 text-sm outline-none transition">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">Aggiungi</button>
+
+                    <!-- PULSANTI ACCENDI/SPEGNI TIPOLOGIA IMPEGNO -->
+                    <div class="flex items-center space-x-2 text-xs">
+                        <span class="text-gray-400 font-medium mr-1">Canale/Tipo:</span>
+                        <button type="button" onclick="toggleTypeTag('telefono')" id="tag-telefono" class="flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+                            <i data-lucide="phone" class="w-3.5 h-3.5"></i><span>Telefono</span>
+                        </button>
+                        <button type="button" onclick="toggleTypeTag('mail')" id="tag-mail" class="flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+                            <i data-lucide="mail" class="w-3.5 h-3.5"></i><span>Mail</span>
+                        </button>
+                        <button type="button" onclick="toggleTypeTag('supermail')" id="tag-supermail" class="flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+                            <i data-lucide="file-text" class="w-3.5 h-3.5"></i><span>Supermail</span>
+                        </button>
+                        <button type="button" onclick="toggleTypeTag('meeting')" id="tag-meeting" class="flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+                            <i data-lucide="users" class="w-3.5 h-3.5"></i><span>Meeting</span>
+                        </button>
+                        <button type="button" onclick="toggleTypeTag('studio')" id="tag-studio" class="flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+                            <i data-lucide="search" class="w-3.5 h-3.5"></i><span>Studio/Analisi</span>
+                        </button>
+                        <button type="button" onclick="toggleTypeTag('testing')" id="tag-testing" class="flex items-center space-x-1 px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+                            <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i><span>Testing</span>
+                        </button>
+                    </div>
                 </form>
-                <button onclick="openModal('report-modal')" class="flex items-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm ml-4">
-                    <i data-lucide="file-text" class="w-4 h-4"></i>
-                    <span>Report Capo</span>
-                </button>
             </header>
 
             <!-- VISTA: PRIORITÀ OGGI -->
@@ -143,12 +185,39 @@
                     </div>
                 </div>
 
+                <!-- CODA TASK CON FILTRI AVANZATI -->
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
-                    <div class="px-6 py-4 border-b border-gray-100 font-bold text-gray-800 flex justify-between items-center">
-                        <span>Coda di Lavorazione Tasks</span>
-                        <span id="admin-view-indicator" class="text-xs font-normal text-blue-600 bg-blue-50 px-2 py-1 rounded hidden">Vista Totale Admin</span>
+                    <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-gray-800">Coda di Lavorazione Tasks</span>
+                            <span id="admin-view-indicator" class="text-xs font-normal text-blue-600 bg-blue-50 px-2 py-1 rounded hidden">Vista Totale Admin</span>
+                        </div>
+                        <!-- BARRA FILTRI -->
+                        <div class="flex items-center space-x-3 text-xs">
+                            <span class="text-gray-400 font-medium">Filtra per:</span>
+                            <select id="filter-project" onchange="renderTasks()" class="px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 font-medium outline-none">
+                                <option value="all">Tutti i Progetti</option>
+                            </select>
+                            <select id="filter-size" onchange="renderTasks()" class="px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 font-medium outline-none">
+                                <option value="all">Tutte le Taglie</option>
+                                <option value="XS">XS</option>
+                                <option value="S">S</option>
+                                <option value="M">M</option>
+                                <option value="L">L</option>
+                                <option value="XL">XL</option>
+                                <option value="XXL">XXL</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="divide-y divide-gray-100" id="tasks-container"></div>
+                </div>
+            </div>
+
+            <!-- VISTA: ALBERO PROGETTI & ATTIVITÀ -->
+            <div id="tab-projects" class="p-8 space-y-6 hidden">
+                <h2 class="text-2xl font-bold text-gray-900">Struttura Progetti e Attività</h2>
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                    <div id="projects-tree-container" class="space-y-4">Caricamento progetti...</div>
                 </div>
             </div>
 
@@ -188,7 +257,7 @@
         </div>
     </div>
 
-    <!-- LOGICA DI SCRIPT & CONNESIONE SUPABASE + CALENDAR -->
+    <!-- SCRIPT APPLICATION LOGIC -->
     <script>
         const SUPABASE_URL = "https://fpnetrdboqanxfeemajg.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_2H6o6gTA4lBy4RlG50p1eQ_iPp03lY6";
@@ -202,6 +271,16 @@
         let currentProfile = null;
         let providerToken = null;
         let tasksList = [];
+        let selectedTypes = [];
+
+        const typeIcons = {
+            telefono: { icon: 'phone', label: 'Telefono' },
+            mail: { icon: 'mail', label: 'Mail' },
+            supermail: { icon: 'file-text', label: 'Supermail' },
+            meeting: { icon: 'users', label: 'Meeting' },
+            studio: { icon: 'search', label: 'Studio' },
+            testing: { icon: 'flask-conical', label: 'Testing' }
+        };
 
         window.onload = async () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -237,6 +316,17 @@
         async function logout() {
             if(supabaseClient) await supabaseClient.auth.signOut();
             location.reload();
+        }
+
+        function toggleTypeTag(type) {
+            const btn = document.getElementById(`tag-${type}`);
+            if (selectedTypes.includes(type)) {
+                selectedTypes = selectedTypes.filter(t => t !== type);
+                btn.classList.remove('type-btn-active');
+            } else {
+                selectedTypes.push(type);
+                btn.classList.add('type-btn-active');
+            }
         }
 
         async function checkUserProfile() {
@@ -314,7 +404,6 @@
         }
 
         async function loadTasksFromCloud() {
-            // L'ADMIN legge tutti i task di tutto il workspace; il collaboratore solo quelli assegnati a lui
             let query = supabaseClient.from('tasks').select('*').order('created_at', { ascending: false });
             
             if (currentProfile && currentProfile.role !== 'admin') {
@@ -324,28 +413,44 @@
             const { data, error } = await query;
             if(!error && data) {
                 tasksList = data;
+                populateProjectFilter();
                 renderTasks();
                 updateCounters();
                 renderGantt();
+                renderProjectsTree();
             }
+        }
+
+        function populateProjectFilter() {
+            const select = document.getElementById('filter-project');
+            const projects = [...new Set(tasksList.map(t => t.project || 'Generale'))];
+            select.innerHTML = '<option value="all">Tutti i Progetti</option>' + projects.map(p => `<option value="${p}">${p}</option>`).join('');
         }
 
         async function addTask(e) {
             e.preventDefault();
             const titleInput = document.getElementById('task-input');
             const projectInput = document.getElementById('project-input');
+            const sizeInput = document.getElementById('size-input');
 
             if(!titleInput.value.trim()) return;
 
-            await supabaseClient.from('tasks').insert([{
+            const newObj = {
                 title: titleInput.value.trim(),
                 project: projectInput.value.trim() || 'Generale',
                 status: 'in_corso',
+                size: sizeInput.value,
+                types: selectedTypes,
                 assigned_email: currentUser.email
-            }]);
+            };
+
+            await supabaseClient.from('tasks').insert([newObj]);
 
             titleInput.value = '';
             projectInput.value = '';
+            selectedTypes = [];
+            Object.keys(typeIcons).forEach(t => document.getElementById(`tag-${t}`).classList.remove('type-btn-active'));
+            
             loadTasksFromCloud();
         }
 
@@ -362,20 +467,38 @@
 
         function renderTasks() {
             const container = document.getElementById('tasks-container');
-            if(tasksList.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">Nessun task presente in coda.</div>`;
+            const projFilter = document.getElementById('filter-project').value;
+            const sizeFilter = document.getElementById('filter-size').value;
+
+            let filtered = tasksList;
+            if (projFilter !== 'all') filtered = filtered.filter(t => (t.project || 'Generale') === projFilter);
+            if (sizeFilter !== 'all') filtered = filtered.filter(t => (t.size || 'M') === sizeFilter);
+
+            if(filtered.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">Nessun task corrisponde ai filtri selezionati.</div>`;
                 return;
             }
 
-            container.innerHTML = tasksList.map(t => `
+            container.innerHTML = filtered.map(t => {
+                const types = Array.isArray(t.types) ? t.types : [];
+                const typeBadges = types.map(tp => {
+                    const info = typeIcons[tp];
+                    return info ? `<span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[11px] font-medium flex items-center space-x-1"><i data-lucide="${info.icon}" class="w-3 h-3"></i><span>${info.label}</span></span>` : '';
+                }).join('');
+
+                return `
                 <div class="p-4 flex items-center justify-between hover:bg-slate-50 transition">
                     <div class="flex items-center space-x-3">
                         <input type="checkbox" ${t.status === 'completato' ? 'checked' : ''} onclick="toggleTaskStatus('${t.id}', '${t.status}')" class="w-5 h-5 text-blue-600 rounded border-gray-300 cursor-pointer">
                         <div>
-                            <p class="font-medium ${t.status === 'completato' ? 'line-through text-gray-400' : 'text-gray-900'}">${t.title}</p>
-                            <div class="flex items-center space-x-2 text-xs text-gray-500 mt-0.5">
-                                <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium">${t.project}</span>
-                                ${t.assigned_email ? `<span>• Assegnato a: ${t.assigned_email}</span>` : ''}
+                            <div class="flex items-center space-x-2">
+                                <p class="font-medium ${t.status === 'completato' ? 'line-through text-gray-400' : 'text-gray-900'}">${t.title}</p>
+                                <span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-xs">${t.size || 'M'}</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-gray-500 mt-1">
+                                <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium">${t.project || 'Generale'}</span>
+                                ${typeBadges}
+                                ${t.assigned_email ? `<span class="text-gray-400">• Assegnato a: ${t.assigned_email}</span>` : ''}
                             </div>
                         </div>
                     </div>
@@ -384,7 +507,44 @@
                         <button onclick="deleteTask('${t.id}')" class="text-gray-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function renderProjectsTree() {
+            const container = document.getElementById('projects-tree-container');
+            const projects = [...new Set(tasksList.map(t => t.project || 'Generale'))];
+
+            if(projects.length === 0) {
+                container.innerHTML = `<p class="text-sm text-gray-400">Nessun progetto o attività presente.</p>`;
+                return;
+            }
+
+            container.innerHTML = projects.map(p => {
+                const projTasks = tasksList.filter(t => (t.project || 'Generale') === p);
+                const taskItems = projTasks.map(t => `
+                    <div class="ml-6 py-2 border-l-2 border-slate-200 pl-4 flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2 h-2 rounded-full ${t.status === 'completato' ? 'bg-green-500' : 'bg-blue-500'}"></span>
+                            <span class="text-sm ${t.status === 'completato' ? 'line-through text-gray-400' : 'text-gray-800'}">${t.title}</span>
+                        </div>
+                        <span class="bg-purple-50 text-purple-700 font-bold px-2 py-0.5 rounded text-xs">Effort: ${t.size || 'M'}</span>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="border border-gray-200 rounded-xl p-4 bg-slate-50 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="folder" class="w-5 h-5 text-blue-600"></i>
+                                <span class="font-bold text-gray-900 text-base">${p}</span>
+                            </div>
+                            <span class="text-xs bg-gray-200 text-gray-700 font-bold px-2.5 py-1 rounded-full">${projTasks.length} Attività</span>
+                        </div>
+                        <div class="pt-2 space-y-1">${taskItems}</div>
+                    </div>
+                `;
+            }).join('');
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
@@ -396,14 +556,14 @@
 
         function renderGantt() {
             const container = document.getElementById('gantt-container');
-            const projects = [...new Set(tasksList.map(t => t.project))];
+            const projects = [...new Set(tasksList.map(t => t.project || 'Generale'))];
             if(projects.length === 0) {
                 container.innerHTML = '<p class="text-sm text-gray-400">Nessun progetto attivo.</p>';
                 return;
             }
 
             container.innerHTML = projects.map(p => {
-                const count = tasksList.filter(t => t.project === p).length;
+                const count = tasksList.filter(t => (t.project || 'Generale') === p).length;
                 return `
                     <div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg border">
                         <span class="font-semibold text-sm">${p}</span>
@@ -444,11 +604,11 @@
         function generateReport() {
             const completati = tasksList.filter(t => t.status === 'completato');
             const inCorso = tasksList.filter(t => t.status === 'in_corso');
-            return `OGGETTO: Aggiornamento Stato Attività\n\nAttività Completate:\n${completati.map(t => `- ${t.title} (${t.project})`).join('\n') || '- Nessuna'}\n\nIn Corso di Lavorazione:\n${inCorso.map(t => `- ${t.title} (${t.project})`).join('\n') || '- Nessuna'}`;
+            return `OGGETTO: Aggiornamento Stato Attività\n\nAttività Completate:\n${completati.map(t => `- ${t.title} [Taglia: ${t.size\vert{}\vert{}'M'}] (${t.project||'Generale'})`).join('\n') || '- Nessuna'}\n\nIn Corso di Lavorazione:\n${inCorso.map(t => `- ${t.title} [Taglia: ${t.size\vert{}\vert{}'M'}] (${t.project||'Generale'})`).join('\n') || '- Nessuna'}`;
         }
 
         function switchTab(tabName) {
-            ['focus', 'gantt', 'admin'].forEach(t => {
+            ['focus', 'projects', 'gantt', 'admin'].forEach(t => {
                 document.getElementById(`tab-${t}`).classList.add('hidden');
                 document.getElementById(`nav-${t}`).classList.remove('sidebar-item-active');
             });
