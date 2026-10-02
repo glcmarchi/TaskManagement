@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Task & Admin Hub (v1.3)</title>
+    <title>Nexus Task & Admin Hub (v1.4)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -16,10 +16,15 @@
         .drag-card { cursor: grab; user-select: none; }
         .drag-card:active { cursor: grabbing; }
         .drag-over-zone { border: 2px dashed #3b82f6 !important; background-color: #eff6ff !important; }
+        
+        /* CSS DEDICATO ALLA STAMPA MINIMAL */
         @media print {
-            aside, header, button, .no-print, #mobile-header { display: none !important; }
+            body { background: white !important; font-family: sans-serif; color: black !important; }
+            aside, header, button, .no-print, #mobile-header, nav { display: none !important; }
             main { padding: 0 !important; background: white !important; }
-            .print-area { display: block !important; border: none !important; box-shadow: none !important; }
+            #app-screen { display: block !important; height: auto !important; overflow: visible !important; }
+            #tab-reporting { display: block !important; }
+            .print-area { display: block !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
         }
     </style>
 </head>
@@ -33,7 +38,7 @@
             </div>
             <div class="flex items-center justify-center space-x-2">
                 <h2 class="text-2xl font-bold text-gray-900">TaskNexus Workspace</h2>
-                <span class="bg-blue-100 text-blue-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full">v1.3</span>
+                <span class="bg-blue-100 text-blue-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full">v1.4</span>
             </div>
             <p class="text-sm text-gray-500">Accedi con il tuo account Google per gestire i tuoi task e collaborare in sicurezza.</p>
             
@@ -65,7 +70,7 @@
             <div class="flex items-center space-x-2">
                 <div class="bg-blue-600 text-white p-1.5 rounded-lg"><i data-lucide="layers" class="w-5 h-5"></i></div>
                 <span class="font-bold text-base">TaskNexus</span>
-                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">v1.3</span>
+                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">v1.4</span>
             </div>
             <button onclick="toggleMobileMenu()" class="p-2 text-slate-300 hover:text-white focus:outline-none">
                 <i data-lucide="menu" class="w-6 h-6"></i>
@@ -81,7 +86,7 @@
                         <div>
                             <div class="flex items-center space-x-1.5">
                                 <h1 class="font-bold text-white text-lg leading-none">TaskNexus</h1>
-                                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded">v1.3</span>
+                                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded">v1.4</span>
                             </div>
                             <span class="text-xs text-slate-400" id="workspace-label">Workspace Attivo</span>
                         </div>
@@ -187,14 +192,15 @@
                 </form>
             </header>
 
-            <!-- VISTA: LE MIE ATTIVITÀ (EX PRIORITÀ OGGI) -->
+            <!-- VISTA: LE MIE ATTIVITÀ -->
             <div id="tab-focus" class="p-4 sm:p-8 space-y-6">
                 <div>
                     <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Le mie attività</h2>
                     <p class="text-gray-500 text-xs sm:text-sm">Dashboard personale e dei task assegnati sincronizzata in Cloud.</p>
                 </div>
 
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <!-- CONTATORI CON NUOVO STATO PARKED -->
+                <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
                     <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-blue-500">
                         <div class="text-[11px] font-semibold text-gray-400 uppercase">In Corso</div>
                         <div class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1" id="count-in-corso">0</div>
@@ -202,6 +208,10 @@
                     <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-amber-500">
                         <div class="text-[11px] font-semibold text-gray-400 uppercase">In Attesa</div>
                         <div class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1" id="count-in-attesa">0</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-purple-500">
+                        <div class="text-[11px] font-semibold text-purple-600 uppercase">Parked</div>
+                        <div class="text-2xl sm:text-3xl font-bold text-purple-700 mt-1" id="count-parked">0</div>
                     </div>
                     <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-red-500">
                         <div class="text-[11px] font-semibold text-red-500 uppercase">In Ritardo</div>
@@ -251,7 +261,6 @@
                                 <option value="all">Tutti i Progetti</option>
                             </select>
 
-                            <!-- FILTRO TAGLIA RIPRISTINATO -->
                             <select id="filter-size" onchange="renderTasks()" class="px-2 py-1.5 bg-gray-100 border rounded-lg text-gray-700 font-medium outline-none w-full">
                                 <option value="all">Tutte le Taglie</option>
                                 <option value="XS">XS</option>
@@ -267,30 +276,37 @@
                 </div>
             </div>
 
-            <!-- VISTA: KANBAN BOARD DRAG & DROP -->
+            <!-- VISTA: KANBAN BOARD (INCLUSO STATO PARKED) -->
             <div id="tab-kanban" class="p-4 sm:p-8 space-y-6 hidden">
                 <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Vista Kanban Board</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
                     <div class="bg-slate-100 p-4 rounded-xl border space-y-3" ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDropKanban(event, 'in_corso')">
                         <div class="font-bold text-slate-700 text-xs sm:text-sm flex justify-between items-center">
                             <span>IN CORSO</span>
                             <span id="kanban-count-in_corso" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full">0</span>
                         </div>
-                        <div id="kanban-col-in_corso" class="space-y-3 min-h-[300px]"></div>
+                        <div id="kanban-col-in_corso" class="space-y-3 min-h-[200px]"></div>
                     </div>
                     <div class="bg-slate-100 p-4 rounded-xl border space-y-3" ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDropKanban(event, 'in_attesa')">
                         <div class="font-bold text-slate-700 text-xs sm:text-sm flex justify-between items-center">
                             <span>IN ATTESA</span>
                             <span id="kanban-count-in_attesa" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full">0</span>
                         </div>
-                        <div id="kanban-col-in_attesa" class="space-y-3 min-h-[300px]"></div>
+                        <div id="kanban-col-in_attesa" class="space-y-3 min-h-[200px]"></div>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-xl border border-purple-200 space-y-3" ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDropKanban(event, 'parked')">
+                        <div class="font-bold text-purple-900 text-xs sm:text-sm flex justify-between items-center">
+                            <span>PARKED 🅿️</span>
+                            <span id="kanban-count-parked" class="bg-purple-200 text-purple-800 text-xs px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="kanban-col-parked" class="space-y-3 min-h-[200px]"></div>
                     </div>
                     <div class="bg-slate-100 p-4 rounded-xl border space-y-3" ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDropKanban(event, 'completato')">
                         <div class="font-bold text-slate-700 text-xs sm:text-sm flex justify-between items-center">
                             <span>COMPLETATI</span>
                             <span id="kanban-count-completato" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full">0</span>
                         </div>
-                        <div id="kanban-col-completato" class="space-y-3 min-h-[300px]"></div>
+                        <div id="kanban-col-completato" class="space-y-3 min-h-[200px]"></div>
                     </div>
                 </div>
             </div>
@@ -299,7 +315,7 @@
             <div id="tab-program" class="p-4 sm:p-8 space-y-6 hidden">
                 <div>
                     <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Programma Settimanale</h2>
-                    <p class="text-gray-500 text-xs sm:text-sm">Trascina le schede col mouse tra le settimane oppure usa il pulsante "+ Assegna Task".</p>
+                    <p class="text-gray-500 text-xs sm:text-sm">Assegna le tue attività esistenti o spostale tra le varie settimane lavorative.</p>
                 </div>
                 <div id="program-weeks-container" class="space-y-6"></div>
             </div>
@@ -312,22 +328,26 @@
                 </div>
             </div>
 
-            <!-- VISTA: REPORTING & STAMPA PROGRAMMA -->
+            <!-- VISTA: REPORTING & STAMPA PROGRAMMA (MINIMAL CON CHECKBOX) -->
             <div id="tab-reporting" class="p-4 sm:p-8 space-y-6 hidden">
-                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Stampa Programma</h2>
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4 max-w-xl">
-                    <h3 class="font-bold text-gray-800 text-base">Seleziona cosa desideri stampare</h3>
-                    <div class="flex flex-col sm:flex-row gap-3 pt-2">
-                        <button onclick="printProgram('current')" class="w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center justify-center space-x-2">
-                            <i data-lucide="printer" class="w-4 h-4"></i><span>Settimana Corrente</span>
-                        </button>
-                        <button onclick="printProgram('next')" class="w-full sm:w-auto px-4 py-2.5 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition flex items-center justify-center space-x-2">
-                            <i data-lucide="printer" class="w-4 h-4"></i><span>Settimana Successiva</span>
-                        </button>
+                <div class="no-print space-y-4 max-w-xl">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Stampa Programma Settimanale</h2>
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-3">
+                        <h3 class="font-bold text-gray-800 text-base">Seleziona la settimana da stampare</h3>
+                        <p class="text-xs text-gray-500">Genera la scheda di lavoro cartacea minimalista divisa per progetti con caselle di spunta.</p>
+                        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                            <button onclick="printProgram('current')" class="w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center justify-center space-x-2">
+                                <i data-lucide="printer" class="w-4 h-4"></i><span>Settimana Corrente</span>
+                            </button>
+                            <button onclick="printProgram('next')" class="w-full sm:w-auto px-4 py-2.5 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition flex items-center justify-center space-x-2">
+                                <i data-lucide="printer" class="w-4 h-4"></i><span>Settimana Successiva</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div id="print-area" class="print-area hidden bg-white p-8"></div>
+                <!-- AREA DI STAMPA MINIMALISTA -->
+                <div id="print-area" class="print-area hidden bg-white"></div>
             </div>
 
             <!-- VISTA: UTILITY & EXPORT EXCEL -->
@@ -367,6 +387,15 @@
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">Titolo Task</label>
                     <input id="edit-task-title" type="text" class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-sm outline-none focus:bg-white focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Stato Task</label>
+                    <select id="edit-task-status" class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-sm outline-none font-medium">
+                        <option value="in_corso">In Corso</option>
+                        <option value="in_attesa">In Attesa</option>
+                        <option value="parked">Parked 🅿️</option>
+                        <option value="completato">Completato</option>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">Progetto</label>
@@ -428,7 +457,7 @@
         </div>
     </div>
 
-    <!-- LOGICA JS V1.3 DEFINITIVA -->
+    <!-- LOGICA JS V1.4 COMPLETA -->
     <script>
         const SUPABASE_URL = "https://fpnetrdboqanxfeemajg.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_2H6o6gTA4lBy4RlG50p1eQ_iPp03lY6";
@@ -503,7 +532,18 @@
             </span>`;
         }
 
-        // DRAG & DROP HTML5 RIPRISTINATO SIA PER KANBAN CHE PROGRAMMA
+        // BADGE INDICATORE "PIANIFICATO" PER LE MIE ATTIVITÀ
+        function getPlannedStatusBadge(task) {
+            if (task.week && task.week != 0) {
+                return `<span class="bg-blue-50 text-blue-700 border border-blue-200 font-medium px-2 py-0.5 rounded text-[10px] flex items-center space-x-1">
+                    <i data-lucide="calendar" class="w-3 h-3"></i><span>Pianificato (Sett. ${task.week})</span>
+                </span>`;
+            }
+            return `<span class="bg-gray-100 text-gray-500 border border-gray-200 font-normal px-2 py-0.5 rounded text-[10px]">
+                Non Inserito
+            </span>`;
+        }
+
         function handleDragStart(ev, taskId) {
             draggedTaskId = taskId;
             try { ev.dataTransfer.setData("text/plain", taskId); } catch(e){}
@@ -738,7 +778,7 @@
                 select.innerHTML = '<option value="">Tutti i tuoi task sono già stati assegnati!</option>';
             } else {
                 select.innerHTML = unassigned.map(function(t) {
-                    const statusLabel = t.status === 'completato' ? ' [COMPLETATO]' : '';
+                    const statusLabel = t.status === 'completato' ? ' [COMPLETATO]' : (t.status === 'parked' ? ' [PARKED]' : '');
                     return '<option value="' + t.id + '">' + t.title + statusLabel + ' (' + (t.project || 'Generale') + ' - Taglia: ' + (t.size||'M') + ')</option>';
                 }).join('');
             }
@@ -777,6 +817,7 @@
             if (!task) return;
             document.getElementById('edit-task-id').value = task.id;
             document.getElementById('edit-task-title').value = task.title;
+            document.getElementById('edit-task-status').value = task.status || 'in_corso';
             document.getElementById('edit-task-project').value = task.project || 'Generale';
             document.getElementById('edit-task-deadline').value = task.deadline || '';
             document.getElementById('edit-task-size').value = task.size || 'M';
@@ -796,6 +837,7 @@
         async function saveTaskEdit() {
             const id = document.getElementById('edit-task-id').value;
             const title = document.getElementById('edit-task-title').value.trim();
+            const status = document.getElementById('edit-task-status').value;
             const project = document.getElementById('edit-task-project').value.trim() || 'Generale';
             const deadline = document.getElementById('edit-task-deadline').value || null;
             const size = document.getElementById('edit-task-size').value;
@@ -807,6 +849,7 @@
 
             await supabaseClient.from('tasks').update({ 
                 title: title, 
+                status: status,
                 project: project, 
                 deadline: deadline, 
                 week: weekNum, 
@@ -845,6 +888,9 @@
                     return info ? '<span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[10px] font-medium flex items-center space-x-1"><i data-lucide="' + info.icon + '" class="w-3 h-3"></i><span>' + info.label + '</span></span>' : '';
                 }).join('');
 
+                const isParked = t.status === 'parked';
+                const statusTag = isParked ? '<span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded">PARKED</span>' : '';
+
                 return '<div class="p-3 sm:p-4 flex items-center justify-between hover:bg-slate-50 transition">' +
                     '<div class="flex items-center space-x-3 truncate">' +
                         '<input type="checkbox" ' + (t.status === 'completato' ? 'checked' : '') + ' onclick="updateTaskStatus(\'' + t.id + '\', \'' + (t.status === 'completato' ? 'in_corso' : 'completato') + '\')" class="w-5 h-5 text-blue-600 rounded border-gray-300 cursor-pointer flex-shrink-0">' +
@@ -852,6 +898,8 @@
                             '<div class="flex items-center space-x-2 flex-wrap gap-1">' +
                                 '<p class="font-medium text-sm ' + (t.status === 'completato' ? 'line-through text-gray-400' : 'text-gray-900') + '">' + t.title + '</p>' +
                                 '<span class="bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded text-[10px]">' + (t.size || 'M') + '</span>' +
+                                statusTag +
+                                getPlannedStatusBadge(t) +
                                 getDeadlineBadge(t.deadline) +
                             '</div>' +
                             '<div class="flex items-center space-x-1.5 text-xs text-gray-500 mt-1 flex-wrap gap-1">' +
@@ -869,9 +917,8 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        // RENDERING KANBAN CON DRAG & DROP RIPRISTINATO
         function renderKanban() {
-            const cols = ['in_corso', 'in_attesa', 'completato'];
+            const cols = ['in_corso', 'in_attesa', 'parked', 'completato'];
             cols.forEach(function(col) {
                 const container = document.getElementById('kanban-col-' + col);
                 const countBadge = document.getElementById('kanban-count-' + col);
@@ -900,7 +947,6 @@
             });
         }
 
-        // RENDERING PROGRAMMA SETTIMANALE CON DRAG & DROP RIPRISTINATO
         function renderProgram() {
             const container = document.getElementById('program-weeks-container');
             if (!container) return;
@@ -923,7 +969,7 @@
                 const taskItems = wTasks.map(function(t) {
                     const isCompleted = t.status === 'completato';
                     const bgClass = isCompleted ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200';
-                    const statusBadge = isCompleted ? '<span class="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">FATTO</span>' : '<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">IN CORSO</span>';
+                    const statusBadge = isCompleted ? '<span class="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">FATTO</span>' : (t.status === 'parked' ? '<span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded">PARKED</span>' : '<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">IN CORSO</span>');
 
                     return '<div draggable="true" ondragstart="handleDragStart(event, \'' + t.id + '\')" class="' + bgClass + ' drag-card p-3 rounded-lg border shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 transition hover:border-blue-500">' +
                         '<div class="flex items-center space-x-2 truncate">' +
@@ -998,6 +1044,7 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
+        // FUNZIONE DI STAMPA MINIMALISTA PERFETTA
         function printProgram(type) {
             const printArea = document.getElementById('print-area');
             const now = new Date();
@@ -1012,27 +1059,65 @@
                 return t.week == wInfo.weekNum; 
             });
 
-            printArea.innerHTML = '<div class="p-6 space-y-4">' +
-                '<div class="border-b pb-4 flex justify-between items-center">' +
-                    '<div>' +
-                        '<h1 class="text-2xl font-bold">Programma Lavorativo Settimanale</h1>' +
-                        '<p class="text-sm text-gray-600">Settimana N. ' + wInfo.weekNum + ' (' + wInfo.rangeStr + ')</p>' +
-                    '</div>' +
-                    '<p class="text-xs text-gray-400">TaskNexus Studio v1.3</p>' +
-                '</div>' +
-                '<div class="space-y-3 pt-4">' +
-                    (wTasks.map(function(t) {
-                        return '<div class="p-3 border rounded-lg flex justify-between items-center">' +
-                            '<div>' +
-                                '<p class="font-bold text-base">' + t.title + '</p>' +
-                                '<p class="text-xs text-gray-500">Progetto: ' + (t.project || 'Generale') + ' | Stato: ' + t.status + (t.deadline ? ' | Deadline: ' + t.deadline : '') + '</p>' +
-                            '</div>' +
-                            '<span class="font-bold border px-2 py-1 rounded">Taglia: ' + (t.size || 'M') + '</span>' +
-                        '</div>';
-                    }).join('') || '<p>Nessun task pianificato per questa settimana.</p>') +
-                '</div>' +
-            '</div>';
+            // Raggruppa i task per Progetto
+            const groupedByProject = {};
+            wTasks.forEach(function(t) {
+                const proj = t.project || 'Generale';
+                if (!groupedByProject[proj]) groupedByProject[proj] = [];
+                groupedByProject[proj].push(t);
+            });
 
+            const todayFormatted = now.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+            let htmlContent = `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #111;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #333; padding-bottom: 12px; margin-bottom: 20px;">
+                        <div>
+                            <h1 style="font-size: 22px; font-weight: bold; margin: 0;">Programma Settimanale N. ${wInfo.weekNum}</h1>
+                            <p style="font-size: 14px; color: #444; margin-top: 4px;">Inclusione date: ${wInfo.rangeStr}</p>
+                        </div>
+                        <div style="text-align: right; font-size: 12px; color: #666;">
+                            <p>Data Elaborazione: <strong>${todayFormatted}</strong></p>
+                        </div>
+                    </div>
+            `;
+
+            const projects = Object.keys(groupedByProject);
+
+            if (projects.length === 0) {
+                htmlContent += `<p style="font-size: 14px; font-style: italic; color: #666;">Nessuna attività pianificata per questa settimana.</p>`;
+            } else {
+                projects.forEach(function(proj) {
+                    htmlContent += `
+                        <div style="margin-bottom: 20px;">
+                            <h2 style="font-size: 16px; font-weight: bold; background: #f0f0f0; padding: 6px 10px; border-left: 4px solid #2563eb; margin-bottom: 10px;">
+                                Progetto: ${proj}
+                            </h2>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    `;
+
+                    groupedByProject[proj].forEach(function(t) {
+                        htmlContent += `
+                            <tr style="border-bottom: 1px solid #e5e5e5;">
+                                <td style="width: 30px; padding: 8px 0; text-align: center;">
+                                    <div style="width: 14px; height: 14px; border: 1.5px solid #333; border-radius: 2px; display: inline-block;"></div>
+                                </td>
+                                <td style="padding: 8px; font-weight: 500;">${t.title}</td>
+                                <td style="width: 80px; text-align: right; font-weight: bold; color: #555;">[Effort: ${t.size || 'M'}]</td>
+                            </tr>
+                        `;
+                    });
+
+                    htmlContent += `
+                            </table>
+                        </div>
+                    `;
+                });
+            }
+
+            htmlContent += `</div>`;
+
+            printArea.innerHTML = htmlContent;
             window.print();
         }
 
@@ -1056,6 +1141,7 @@
             
             const inCorso = tasksList.filter(function(t) { return t.status === 'in_corso'; }).length;
             const inAttesa = tasksList.filter(function(t) { return t.status === 'in_attesa'; }).length;
+            const parked = tasksList.filter(function(t) { return t.status === 'parked'; }).length;
             const completati = tasksList.filter(function(t) { return t.status === 'completato'; }).length;
             const inRitardo = tasksList.filter(function(t) { 
                 return t.status !== 'completato' && t.deadline && new Date(t.deadline) < today; 
@@ -1063,6 +1149,7 @@
 
             if (document.getElementById('count-in-corso')) document.getElementById('count-in-corso').innerText = inCorso;
             if (document.getElementById('count-in-attesa')) document.getElementById('count-in-attesa').innerText = inAttesa;
+            if (document.getElementById('count-parked')) document.getElementById('count-parked').innerText = parked;
             if (document.getElementById('count-completati')) document.getElementById('count-completati').innerText = completati;
             if (document.getElementById('count-in-ritardo')) document.getElementById('count-in-ritardo').innerText = inRitardo;
         }
