@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Task & Admin Hub (v1.4)</title>
+    <title>Nexus Task & Admin Hub (v1.5)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -17,7 +17,6 @@
         .drag-card:active { cursor: grabbing; }
         .drag-over-zone { border: 2px dashed #3b82f6 !important; background-color: #eff6ff !important; }
         
-        /* CSS DEDICATO ALLA STAMPA MINIMAL */
         @media print {
             body { background: white !important; font-family: sans-serif; color: black !important; }
             aside, header, button, .no-print, #mobile-header, nav { display: none !important; }
@@ -38,7 +37,7 @@
             </div>
             <div class="flex items-center justify-center space-x-2">
                 <h2 class="text-2xl font-bold text-gray-900">TaskNexus Workspace</h2>
-                <span class="bg-blue-100 text-blue-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full">v1.4</span>
+                <span class="bg-blue-100 text-blue-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full">v1.5</span>
             </div>
             <p class="text-sm text-gray-500">Accedi con il tuo account Google per gestire i tuoi task e collaborare in sicurezza.</p>
             
@@ -70,7 +69,7 @@
             <div class="flex items-center space-x-2">
                 <div class="bg-blue-600 text-white p-1.5 rounded-lg"><i data-lucide="layers" class="w-5 h-5"></i></div>
                 <span class="font-bold text-base">TaskNexus</span>
-                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">v1.4</span>
+                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">v1.5</span>
             </div>
             <button onclick="toggleMobileMenu()" class="p-2 text-slate-300 hover:text-white focus:outline-none">
                 <i data-lucide="menu" class="w-6 h-6"></i>
@@ -86,7 +85,7 @@
                         <div>
                             <div class="flex items-center space-x-1.5">
                                 <h1 class="font-bold text-white text-lg leading-none">TaskNexus</h1>
-                                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded">v1.4</span>
+                                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded">v1.5</span>
                             </div>
                             <span class="text-xs text-slate-400" id="workspace-label">Workspace Attivo</span>
                         </div>
@@ -194,12 +193,21 @@
 
             <!-- VISTA: LE MIE ATTIVITÀ -->
             <div id="tab-focus" class="p-4 sm:p-8 space-y-6">
-                <div>
-                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Le mie attività</h2>
-                    <p class="text-gray-500 text-xs sm:text-sm">Dashboard personale e dei task assegnati sincronizzata in Cloud.</p>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Le mie attività</h2>
+                        <p class="text-gray-500 text-xs sm:text-sm">Dashboard personale e dei task assegnati sincronizzata in Cloud.</p>
+                    </div>
+                    <!-- CONTROLLO VISTA COLLABORATORE DEDICATO ADMIN -->
+                    <div id="admin-user-filter-focus" class="hidden flex items-center space-x-2 bg-blue-50 border border-blue-200 p-2 rounded-lg text-xs">
+                        <span class="font-bold text-blue-900">Vista Utente:</span>
+                        <select id="select-user-focus" onchange="changeUserFilter(this.value)" class="bg-white border rounded px-2 py-1 text-gray-700 outline-none font-medium">
+                            <!-- Popolato via JS -->
+                        </select>
+                    </div>
                 </div>
 
-                <!-- CONTATORI CON NUOVO STATO PARKED -->
+                <!-- CONTATORI CON STATO PARKED -->
                 <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
                     <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-blue-500">
                         <div class="text-[11px] font-semibold text-gray-400 uppercase">In Corso</div>
@@ -237,12 +245,12 @@
                     </div>
                 </div>
 
-                <!-- CODA TASK CON FILTRI INCLUSO CANALE/TIPO E TAGLIA -->
+                <!-- CODA TASK CON FILTRI -->
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
                     <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div class="flex items-center space-x-2">
                             <span class="font-bold text-gray-800 text-sm sm:text-base">Coda Tasks</span>
-                            <span id="admin-view-indicator" class="text-[10px] font-normal text-blue-600 bg-blue-50 px-2 py-0.5 rounded hidden">Vista Admin</span>
+                            <span id="admin-view-indicator" class="text-[10px] font-normal text-blue-600 bg-blue-50 px-2 py-0.5 rounded hidden">Modalità Team Attiva</span>
                         </div>
                         <div class="grid grid-cols-2 sm:flex items-center gap-2 text-xs w-full sm:w-auto">
                             <input id="filter-search" type="text" oninput="renderTasks()" placeholder="Cerca..." class="col-span-2 sm:col-span-1 px-2.5 py-1.5 bg-gray-100 border rounded-lg outline-none w-full sm:w-32">
@@ -276,9 +284,16 @@
                 </div>
             </div>
 
-            <!-- VISTA: KANBAN BOARD (INCLUSO STATO PARKED) -->
+            <!-- VISTA: KANBAN BOARD -->
             <div id="tab-kanban" class="p-4 sm:p-8 space-y-6 hidden">
-                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Vista Kanban Board</h2>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Vista Kanban Board</h2>
+                    <div id="admin-user-filter-kanban" class="hidden flex items-center space-x-2 bg-blue-50 border border-blue-200 p-2 rounded-lg text-xs">
+                        <span class="font-bold text-blue-900">Vista Utente:</span>
+                        <select id="select-user-kanban" onchange="changeUserFilter(this.value)" class="bg-white border rounded px-2 py-1 text-gray-700 outline-none font-medium">
+                        </select>
+                    </div>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
                     <div class="bg-slate-100 p-4 rounded-xl border space-y-3" ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDropKanban(event, 'in_corso')">
                         <div class="font-bold text-slate-700 text-xs sm:text-sm flex justify-between items-center">
@@ -313,28 +328,49 @@
 
             <!-- VISTA: PROGRAMMA SETTIMANALE -->
             <div id="tab-program" class="p-4 sm:p-8 space-y-6 hidden">
-                <div>
-                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Programma Settimanale</h2>
-                    <p class="text-gray-500 text-xs sm:text-sm">Assegna le tue attività esistenti o spostale tra le varie settimane lavorative.</p>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Programma Settimanale</h2>
+                        <p class="text-gray-500 text-xs sm:text-sm">Assegna le tue attività esistenti o spostale tra le varie settimane lavorative.</p>
+                    </div>
+                    <div id="admin-user-filter-program" class="hidden flex items-center space-x-2 bg-blue-50 border border-blue-200 p-2 rounded-lg text-xs">
+                        <span class="font-bold text-blue-900">Vista Utente:</span>
+                        <select id="select-user-program" onchange="changeUserFilter(this.value)" class="bg-white border rounded px-2 py-1 text-gray-700 outline-none font-medium">
+                        </select>
+                    </div>
                 </div>
                 <div id="program-weeks-container" class="space-y-6"></div>
             </div>
 
             <!-- VISTA: ALBERO PROGETTI & ATTIVITÀ -->
             <div id="tab-projects" class="p-4 sm:p-8 space-y-6 hidden">
-                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Progetti e Attività</h2>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Progetti e Attività</h2>
+                    <div id="admin-user-filter-projects" class="hidden flex items-center space-x-2 bg-blue-50 border border-blue-200 p-2 rounded-lg text-xs">
+                        <span class="font-bold text-blue-900">Vista Utente:</span>
+                        <select id="select-user-projects" onchange="changeUserFilter(this.value)" class="bg-white border rounded px-2 py-1 text-gray-700 outline-none font-medium">
+                        </select>
+                    </div>
+                </div>
                 <div class="bg-white p-4 sm:p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div id="projects-tree-container" class="space-y-4">Caricamento progetti...</div>
                 </div>
             </div>
 
-            <!-- VISTA: REPORTING & STAMPA PROGRAMMA (MINIMAL CON CHECKBOX) -->
+            <!-- VISTA: REPORTING & STAMPA PROGRAMMA -->
             <div id="tab-reporting" class="p-4 sm:p-8 space-y-6 hidden">
                 <div class="no-print space-y-4 max-w-xl">
                     <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Stampa Programma Settimanale</h2>
-                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-3">
-                        <h3 class="font-bold text-gray-800 text-base">Seleziona la settimana da stampare</h3>
-                        <p class="text-xs text-gray-500">Genera la scheda di lavoro cartacea minimalista divisa per progetti con caselle di spunta.</p>
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                        <h3 class="font-bold text-gray-800 text-base">Seleziona le opzioni di stampa</h3>
+                        
+                        <div id="admin-print-filter" class="hidden bg-slate-50 p-3 rounded-lg border space-y-2">
+                            <label class="block text-xs font-bold text-slate-700">Seleziona per chi stampare il report:</label>
+                            <select id="print-user-select" class="w-full px-3 py-2 bg-white border rounded-lg text-sm font-medium outline-none">
+                                <!-- Popolato via JS -->
+                            </select>
+                        </div>
+
                         <div class="flex flex-col sm:flex-row gap-3 pt-2">
                             <button onclick="printProgram('current')" class="w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center justify-center space-x-2">
                                 <i data-lucide="printer" class="w-4 h-4"></i><span>Settimana Corrente</span>
@@ -346,7 +382,6 @@
                     </div>
                 </div>
 
-                <!-- AREA DI STAMPA MINIMALISTA -->
                 <div id="print-area" class="print-area hidden bg-white"></div>
             </div>
 
@@ -363,10 +398,26 @@
                 </div>
             </div>
 
-            <!-- VISTA: CONSOLA ADMIN -->
+            <!-- VISTA: CONSOLA ADMIN CON SWITCH TEAM -->
             <div id="tab-admin" class="p-4 sm:p-8 space-y-6 hidden">
                 <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Consola Amministrazione</h2>
+                
+                <!-- SWITCH TEAM DEDICATO ADMIN -->
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-blue-900 text-base">Modalità Visibilità Multi-Utente Team</h3>
+                            <p class="text-xs text-blue-700">Attiva questa opzione per accedere ai task di tutti i collaboratori e sbloccare i selettori dedicati in tutte le schermate.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="admin-team-toggle" onchange="toggleAdminTeamMode(this.checked)" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
+                    <h3 class="font-bold text-gray-800 text-base">Utenti Registrati & Gestione Permessi</h3>
                     <div id="users-admin-list" class="divide-y divide-gray-100">
                         <p class="text-gray-400 text-sm">Caricamento utenti...</p>
                     </div>
@@ -457,7 +508,7 @@
         </div>
     </div>
 
-    <!-- LOGICA JS V1.4 COMPLETA -->
+    <!-- LOGICA JS V1.5 COMPLETA -->
     <script>
         const SUPABASE_URL = "https://fpnetrdboqanxfeemajg.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_2H6o6gTA4lBy4RlG50p1eQ_iPp03lY6";
@@ -471,9 +522,14 @@
         let currentProfile = null;
         let providerToken = null;
         let tasksList = [];
+        let allUsersList = [];
         let selectedTypes = [];
         let editSelectedTypes = [];
         let draggedTaskId = null;
+
+        // GESTIONE VISIBILITÀ ADMIN MULTI-UTENTE
+        let isAdminTeamModeEnabled = false;
+        let selectedUserFilter = "me"; // "me", "all", o email specifica
 
         const typeIcons = {
             telefono: { icon: 'phone', label: 'Telefono' },
@@ -532,7 +588,6 @@
             </span>`;
         }
 
-        // BADGE INDICATORE "PIANIFICATO" PER LE MIE ATTIVITÀ
         function getPlannedStatusBadge(task) {
             if (task.week && task.week != 0) {
                 return `<span class="bg-blue-50 text-blue-700 border border-blue-200 font-medium px-2 py-0.5 rounded text-[10px] flex items-center space-x-1">
@@ -542,6 +597,16 @@
             return `<span class="bg-gray-100 text-gray-500 border border-gray-200 font-normal px-2 py-0.5 rounded text-[10px]">
                 Non Inserito
             </span>`;
+        }
+
+        function getUserOwnerBadge(task) {
+            if (isAdminTeamModeEnabled && selectedUserFilter === 'all') {
+                const emailName = task.assigned_email ? task.assigned_email.split('@')[0] : 'Anonimo';
+                return `<span class="bg-slate-200 text-slate-800 border border-slate-300 font-semibold px-2 py-0.5 rounded text-[10px]" title="${task.assigned_email}">
+                    👤 ${emailName}
+                </span>`;
+            }
+            return '';
         }
 
         function handleDragStart(ev, taskId) {
@@ -660,6 +725,7 @@
                     if (currentProfile.role === 'admin') {
                         document.getElementById('nav-admin').classList.remove('hidden');
                         document.getElementById('admin-view-indicator').classList.remove('hidden');
+                        await loadAllApprovedUsers();
                     }
 
                     await loadTasksFromCloud();
@@ -670,6 +736,62 @@
                     document.getElementById('pending-screen').classList.remove('hidden');
                 }
             } else { setTimeout(checkUserProfile, 1000); }
+        }
+
+        async function loadAllApprovedUsers() {
+            const res = await supabaseClient.from('profiles').select('email').eq('status', 'approvato');
+            if (res.data) {
+                allUsersList = res.data.map(u => u.email);
+                updateAdminUserSelects();
+            }
+        }
+
+        function toggleAdminTeamMode(enabled) {
+            isAdminTeamModeEnabled = enabled;
+            const elements = [
+                'admin-user-filter-focus',
+                'admin-user-filter-kanban',
+                'admin-user-filter-program',
+                'admin-user-filter-projects',
+                'admin-print-filter'
+            ];
+            
+            elements.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (enabled) el.classList.remove('hidden');
+                    else el.classList.add('hidden');
+                }
+            });
+
+            if (!enabled) selectedUserFilter = "me";
+            loadTasksFromCloud();
+        }
+
+        function updateAdminUserSelects() {
+            const ids = ['select-user-focus', 'select-user-kanban', 'select-user-program', 'select-user-projects', 'print-user-select'];
+            
+            let options = `<option value="me">👤 Solo i Miei Task (${currentUser.email.split('@')[0]})</option>`;
+            options += `<option value="all">👥 Tutti i Collaboratori</option>`;
+            allUsersList.forEach(email => {
+                if (email !== currentUser.email) {
+                    options += `<option value="${email}">✉️ ${email}</option>`;
+                }
+            });
+
+            ids.forEach(id => {
+                const select = document.getElementById(id);
+                if (select) {
+                    select.innerHTML = options;
+                    select.value = selectedUserFilter;
+                }
+            });
+        }
+
+        function changeUserFilter(value) {
+            selectedUserFilter = value;
+            updateAdminUserSelects();
+            loadTasksFromCloud();
         }
 
         async function fetchGoogleCalendarEvents() {
@@ -707,7 +829,17 @@
 
         async function loadTasksFromCloud() {
             let query = supabaseClient.from('tasks').select('*').order('created_at', { ascending: false });
-            if (currentProfile && currentProfile.role !== 'admin') { query = query.eq('assigned_email', currentUser.email); }
+
+            // APPLICAZIONE FILTRO UTENTE ADMIN O UTENTE STANDARD
+            if (currentProfile && currentProfile.role === 'admin' && isAdminTeamModeEnabled) {
+                if (selectedUserFilter === 'me') {
+                    query = query.eq('assigned_email', currentUser.email);
+                } else if (selectedUserFilter !== 'all') {
+                    query = query.eq('assigned_email', selectedUserFilter);
+                }
+            } else {
+                query = query.eq('assigned_email', currentUser.email);
+            }
 
             const res = await query;
             if (!res.error && res.data) {
@@ -779,7 +911,8 @@
             } else {
                 select.innerHTML = unassigned.map(function(t) {
                     const statusLabel = t.status === 'completato' ? ' [COMPLETATO]' : (t.status === 'parked' ? ' [PARKED]' : '');
-                    return '<option value="' + t.id + '">' + t.title + statusLabel + ' (' + (t.project || 'Generale') + ' - Taglia: ' + (t.size||'M') + ')</option>';
+                    const ownerLabel = (isAdminTeamModeEnabled && selectedUserFilter === 'all') ? ` (${t.assigned_email.split('@')[0]})` : '';
+                    return '<option value="' + t.id + '">' + t.title + statusLabel + ownerLabel + ' - Taglia: ' + (t.size||'M') + '</option>';
                 }).join('');
             }
 
@@ -899,6 +1032,7 @@
                                 '<p class="font-medium text-sm ' + (t.status === 'completato' ? 'line-through text-gray-400' : 'text-gray-900') + '">' + t.title + '</p>' +
                                 '<span class="bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded text-[10px]">' + (t.size || 'M') + '</span>' +
                                 statusTag +
+                                getUserOwnerBadge(t) +
                                 getPlannedStatusBadge(t) +
                                 getDeadlineBadge(t.deadline) +
                             '</div>' +
@@ -940,6 +1074,7 @@
                         '</div>' +
                         '<div class="flex justify-between items-center text-[10px] text-gray-500">' +
                             '<span class="bg-blue-100 text-blue-800 font-medium px-2 py-0.5 rounded">' + (t.project || 'Generale') + '</span>' +
+                            getUserOwnerBadge(t) +
                             getDeadlineBadge(t.deadline) +
                         '</div>' +
                     '</div>';
@@ -975,6 +1110,7 @@
                         '<div class="flex items-center space-x-2 truncate">' +
                             '<span class="font-medium text-sm ' + (isCompleted ? 'line-through text-gray-500' : 'text-gray-800') + '">' + t.title + '</span>' +
                             '<span class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-medium">' + (t.project || 'Generale') + '</span>' +
+                            getUserOwnerBadge(t) +
                         '</div>' +
                         '<div class="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-2 sm:pt-0">' +
                             statusBadge +
@@ -1024,6 +1160,7 @@
                             '<span class="text-xs sm:text-sm ' + (t.status === 'completato' ? 'line-through text-gray-400' : 'text-gray-800') + '">' + t.title + '</span>' +
                         '</div>' +
                         '<div class="flex items-center space-x-2 flex-shrink-0 ml-2">' +
+                            getUserOwnerBadge(t) +
                             getDeadlineBadge(t.deadline) +
                             '<span class="bg-purple-50 text-purple-700 font-bold px-2 py-0.5 rounded text-[10px]">Effort: ' + (t.size || 'M') + '</span>' +
                         '</div>' +
@@ -1044,7 +1181,6 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        // FUNZIONE DI STAMPA MINIMALISTA PERFETTA
         function printProgram(type) {
             const printArea = document.getElementById('print-area');
             const now = new Date();
@@ -1052,14 +1188,25 @@
             if (type === 'next') targetDate.setDate(now.getDate() + 7);
 
             const wInfo = getISOWeekInfo(targetDate);
+            
+            // FILTRAGGIO UTENTE PER LA STAMPA
+            let printUserTarget = selectedUserFilter;
+            const printSelect = document.getElementById('print-user-select');
+            if (isAdminTeamModeEnabled && printSelect) {
+                printUserTarget = printSelect.value;
+            }
+
             const wTasks = tasksList.filter(function(t) { 
-                if (t.deadline) {
-                    return getISOWeekInfo(new Date(t.deadline)).weekNum == wInfo.weekNum;
+                const matchWeek = t.deadline ? getISOWeekInfo(new Date(t.deadline)).weekNum == wInfo.weekNum : t.week == wInfo.weekNum;
+                if (!matchWeek) return false;
+
+                if (isAdminTeamModeEnabled) {
+                    if (printUserTarget === 'me') return t.assigned_email === currentUser.email;
+                    if (printUserTarget !== 'all') return t.assigned_email === printUserTarget;
                 }
-                return t.week == wInfo.weekNum; 
+                return true;
             });
 
-            // Raggruppa i task per Progetto
             const groupedByProject = {};
             wTasks.forEach(function(t) {
                 const proj = t.project || 'Generale';
@@ -1071,13 +1218,14 @@
 
             let htmlContent = `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #111;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #333; padding-bottom: 12px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-between; align-items: flex-start; border-bottom: 2px solid #333; padding-bottom: 12px; margin-bottom: 20px;">
                         <div>
                             <h1 style="font-size: 22px; font-weight: bold; margin: 0;">Programma Settimanale N. ${wInfo.weekNum}</h1>
                             <p style="font-size: 14px; color: #444; margin-top: 4px;">Inclusione date: ${wInfo.rangeStr}</p>
                         </div>
                         <div style="text-align: right; font-size: 12px; color: #666;">
                             <p>Data Elaborazione: <strong>${todayFormatted}</strong></p>
+                            <p>Filtro Utente: <strong>${printUserTarget === 'all' ? 'Tutto il Team' : (printUserTarget === 'me' ? currentUser.email : printUserTarget)}</strong></p>
                         </div>
                     </div>
             `;
@@ -1097,12 +1245,13 @@
                     `;
 
                     groupedByProject[proj].forEach(function(t) {
+                        const ownerStr = (isAdminTeamModeEnabled && printUserTarget === 'all') ? ` <span style="font-size: 11px; color: #666;">(${t.assigned_email ? t.assigned_email.split('@')[0] : ''})</span>` : '';
                         htmlContent += `
                             <tr style="border-bottom: 1px solid #e5e5e5;">
                                 <td style="width: 30px; padding: 8px 0; text-align: center;">
                                     <div style="width: 14px; height: 14px; border: 1.5px solid #333; border-radius: 2px; display: inline-block;"></div>
                                 </td>
-                                <td style="padding: 8px; font-weight: 500;">${t.title}</td>
+                                <td style="padding: 8px; font-weight: 500;">${t.title} ${ownerStr}</td>
                                 <td style="width: 80px; text-align: right; font-weight: bold; color: #555;">[Effort: ${t.size || 'M'}]</td>
                             </tr>
                         `;
@@ -1180,6 +1329,7 @@
         async function approveUser(userId) {
             await supabaseClient.from('profiles').update({ status: 'approvato' }).eq('id', userId);
             loadAdminUsers();
+            loadAllApprovedUsers();
         }
 
         function switchTab(tabName) {
