@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Task & Admin Hub (v1.7.2)</title>
+    <title>Nexus Task & Admin Hub (v1.8)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -37,7 +37,7 @@
             </div>
             <div class="flex items-center justify-center space-x-2">
                 <h2 class="text-2xl font-bold text-gray-900">TaskNexus Workspace</h2>
-                <span class="bg-blue-100 text-blue-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full">v1.7.2</span>
+                <span class="bg-blue-100 text-blue-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full">v1.8</span>
             </div>
             <p class="text-sm text-gray-500">Accedi con il tuo account Google per gestire i tuoi task e collaborare in sicurezza.</p>
             
@@ -69,7 +69,7 @@
             <div class="flex items-center space-x-2">
                 <div class="bg-blue-600 text-white p-1.5 rounded-lg"><i data-lucide="layers" class="w-5 h-5"></i></div>
                 <span class="font-bold text-base">TaskNexus</span>
-                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">v1.7.2</span>
+                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">v1.8</span>
             </div>
             <button onclick="toggleMobileMenu()" class="p-2 text-slate-300 hover:text-white focus:outline-none">
                 <i data-lucide="menu" class="w-6 h-6"></i>
@@ -85,7 +85,7 @@
                         <div>
                             <div class="flex items-center space-x-1.5">
                                 <h1 class="font-bold text-white text-lg leading-none">TaskNexus</h1>
-                                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded">v1.7.2</span>
+                                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded">v1.8</span>
                             </div>
                             <span class="text-xs text-slate-400" id="workspace-label">Workspace Attivo</span>
                         </div>
@@ -324,12 +324,12 @@
                 </div>
             </div>
 
-            <!-- VISTA: PROGRAMMA SETTIMANALE -->
+            <!-- VISTA: PROGRAMMA SETTIMANALE CON FERIE E FESTIVITÀ NAZIONALI -->
             <div id="tab-program" class="p-4 sm:p-8 space-y-6 hidden">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                         <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Programma Settimanale</h2>
-                        <p class="text-gray-500 text-xs sm:text-sm">Inclusione automatica degli eventi Google Calendar neri (#000000) o marcati KEY.</p>
+                        <p class="text-gray-500 text-xs sm:text-sm">Vista completa con inclusione automatica di Festività Nazionali, Giorni di Ferie ed Eventi KEY.</p>
                     </div>
                     <div id="admin-user-filter-program" class="hidden flex items-center space-x-2 bg-blue-50 border border-blue-200 p-2 rounded-lg text-xs">
                         <span class="font-bold text-blue-900">Vista Utente:</span>
@@ -504,10 +504,11 @@
         </div>
     </div>
 
-    <!-- LOGICA JS V1.7.2 -->
+    <!-- LOGICA JS V1.8 COMPLETA CON FERIE E FESTIVITÀ -->
     <script>
         const SUPABASE_URL = "https://fpnetrdboqanxfeemajg.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_2H6o6gTA4lBy4RlG50p1eQ_iPp03lY6";
+        const GOOGLE_API_KEY = "AIzaSyCsz2vANH9C5bPgWJIkVDwhboK2QqHYb14";
 
         function getSupabase() {
             if (typeof window.supabase !== 'undefined') {
@@ -522,6 +523,8 @@
         let providerToken = null;
         let tasksList = [];
         let googleCalendarKeyEvents = [];
+        let googleCalendarFerieEvents = [];
+        let italianHolidaysList = [];
         let allUsersList = [];
         let selectedTypes = [];
         let editSelectedTypes = [];
@@ -739,6 +742,7 @@
                     await loadTasksFromCloud();
                     fetchGoogleCalendarEvents();
                     fetchGoogleCalendarKeyEventsForProgram();
+                    fetchItalianHolidays();
                 } else {
                     document.getElementById('login-screen').classList.add('hidden');
                     document.getElementById('pending-email').innerText = currentUser.email;
@@ -804,13 +808,13 @@
             loadTasksFromCloud();
         }
 
-        // SINCRONIZZAZIONE MANUALE CON FEEDBACK E GESTIONE ERRORE TOKEN
         async function manualSyncCalendar() {
             const btn = document.getElementById('btn-sync-calendar');
             if (btn) btn.innerText = "Sincronizzazione in corso...";
             
             await fetchGoogleCalendarEvents();
             await fetchGoogleCalendarKeyEventsForProgram();
+            await fetchItalianHolidays();
 
             if (btn) btn.innerText = "Sincronizza";
         }
@@ -860,6 +864,7 @@
             }
         }
 
+        // SCARICA EVENTI GOOGLE CALENDAR (KEY E FERIE)
         async function fetchGoogleCalendarKeyEventsForProgram() {
             if (!providerToken) return;
             const now = new Date();
@@ -883,9 +888,36 @@
                         return isKeyText || isBlackColor;
                     });
 
+                    googleCalendarFerieEvents = items.filter(ev => {
+                        const title = (ev.summary || '').toUpperCase();
+                        const desc = (ev.description || '').toUpperCase();
+                        return title.includes('FERIE') || desc.includes('FERIE');
+                    });
+
                     renderProgram();
                 }
-            } catch (e) { console.error("Errore recupero eventi KEY:", e); }
+            } catch (e) { console.error("Errore recupero eventi KEY/FERIE:", e); }
+        }
+
+        // RECUPERA LE FESTIVITÀ NAZIONALI ITALIANE
+        async function fetchItalianHolidays() {
+            if (!providerToken) return;
+            const now = new Date();
+            const startRange = new Date(now.getFullYear(), 0, 1).toISOString();
+            const endRange = new Date(now.getFullYear(), 11, 31).toISOString();
+            const calendarId = encodeURIComponent('it.italian#holiday@group.v.calendar.google.com');
+
+            try {
+                const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?timeMin=${startRange}&timeMax=${endRange}&singleEvents=true`, {
+                    headers: { 'Authorization': 'Bearer ' + providerToken }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    italianHolidaysList = data.items || [];
+                    renderProgram();
+                }
+            } catch (e) { console.error("Errore recupero festività italiane:", e); }
         }
 
         async function loadTasksFromCloud() {
@@ -1149,6 +1181,7 @@
             });
         }
 
+        // RENDERING PROGRAMMA SETTIMANALE CON FESTIVITÀ E FERIE SOTTO LE DATE
         function renderProgram() {
             const container = document.getElementById('program-weeks-container');
             if (!container) return;
@@ -1168,11 +1201,39 @@
                     return t.week == wInfo.weekNum; 
                 });
 
+                // Festività Nazionali della settimana
+                const wHolidays = italianHolidaysList.filter(function(ev) {
+                    const startDateStr = ev.start.date || ev.start.dateTime;
+                    if (!startDateStr) return false;
+                    return getISOWeekInfo(new Date(startDateStr)).weekNum == wInfo.weekNum;
+                });
+
+                // Ferie del calendario della settimana
+                const wFerie = googleCalendarFerieEvents.filter(function(ev) {
+                    const startDateStr = ev.start.date || ev.start.dateTime;
+                    if (!startDateStr) return false;
+                    return getISOWeekInfo(new Date(startDateStr)).weekNum == wInfo.weekNum;
+                });
+
+                // Eventi Key della settimana
                 const wKeyEvents = googleCalendarKeyEvents.filter(function(ev) {
                     const startDateStr = ev.start.dateTime || ev.start.date;
                     if (!startDateStr) return false;
                     return getISOWeekInfo(new Date(startDateStr)).weekNum == wInfo.weekNum;
                 });
+
+                // Banner Festività & Ferie sotto l'intestazione
+                let infoBannerHtml = '';
+                if (wHolidays.length > 0 || wFerie.length > 0) {
+                    const holidayBadges = wHolidays.map(h => `<span class="bg-red-100 text-red-800 border border-red-200 px-2 py-0.5 rounded font-bold text-[10px]">🇮🇹 ${h.summary}</span>`).join(' ');
+                    const ferieBadges = wFerie.map(f => `<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded font-bold text-[10px]">🌴 ${f.summary}</span>`).join(' ');
+                    
+                    infoBannerHtml = `<div class="bg-slate-50 border border-slate-200 p-2 rounded-lg flex flex-wrap gap-2 items-center text-xs mt-1">
+                        <span class="font-bold text-gray-500 text-[10px] uppercase">Festività/Ferie:</span>
+                        ${holidayBadges}
+                        ${ferieBadges}
+                    </div>`;
+                }
 
                 const taskItems = wTasks.map(function(t) {
                     const isCompleted = t.status === 'completato';
@@ -1215,6 +1276,7 @@
                         '<div>' +
                             '<h3 class="font-bold text-gray-800 text-base">Settimana ' + wInfo.weekNum + '</h3>' +
                             '<p class="text-xs text-blue-600 font-medium">Lunedì - Venerdì: ' + wInfo.rangeStr + '</p>' +
+                            infoBannerHtml +
                         '</div>' +
                         '<div class="flex items-center justify-between w-full sm:w-auto space-x-3">' +
                             '<span class="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full font-bold">' + totalItemsCount + ' Elementi</span>' +
