@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Task & Admin Hub (v2.1)</title>
+    <title>Nexus Task & Admin Hub (v2.2)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -13,11 +13,6 @@
     <style>
         .sidebar-item-active { background-color: #3b82f6; color: white; }
         .type-btn-active { background-color: #3b82f6; color: white; border-color: #2563eb; }
-        .drag-card { cursor: grab; user-select: none; -webkit-user-drag: element; }
-        .drag-card:active { cursor: grabbing; }
-        .drag-card * { pointer-events: none; } /* Impedisce agli elementi interni di bloccare il drag */
-        .drag-card button, .drag-card input { pointer-events: auto; } /* Mantiene cliccabili pulsanti e checkbox */
-        .drag-over-zone { border: 2px dashed #3b82f6 !important; background-color: #eff6ff !important; }
         
         @media print {
             body { background: white !important; font-family: sans-serif; color: black !important; }
@@ -25,7 +20,7 @@
             main { padding: 0 !important; background: white !important; }
             #app-screen { display: block !important; height: auto !important; overflow: visible !important; }
             #tab-reporting { display: block !important; }
-            .print-area { display: block !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
+            .print-area { display: block !important; border: none !important; shadow: none !important; padding: 0 !important; }
         }
     </style>
 </head>
@@ -39,7 +34,7 @@
             </div>
             <div class="flex items-center justify-center space-x-2">
                 <h2 class="text-2xl font-bold text-gray-900">TaskNexus Workspace</h2>
-                <span class="bg-blue-100 text-blue-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full">v2.1</span>
+                <span class="bg-blue-100 text-blue-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full">v2.2</span>
             </div>
             <p class="text-sm text-gray-500">Accedi con il tuo account Google per gestire i tuoi task e collaborare in sicurezza.</p>
             
@@ -71,7 +66,7 @@
             <div class="flex items-center space-x-2">
                 <div class="bg-blue-600 text-white p-1.5 rounded-lg"><i data-lucide="layers" class="w-5 h-5"></i></div>
                 <span class="font-bold text-base">TaskNexus</span>
-                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">v2.1</span>
+                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">v2.2</span>
             </div>
             <button onclick="toggleMobileMenu()" class="p-2 text-slate-300 hover:text-white focus:outline-none">
                 <i data-lucide="menu" class="w-6 h-6"></i>
@@ -87,7 +82,7 @@
                         <div>
                             <div class="flex items-center space-x-1.5">
                                 <h1 class="font-bold text-white text-lg leading-none">TaskNexus</h1>
-                                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded">v2.1</span>
+                                <span class="bg-blue-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded">v2.2</span>
                             </div>
                             <span class="text-xs text-slate-400" id="workspace-label">Workspace Attivo</span>
                         </div>
@@ -245,7 +240,7 @@
                     </div>
                 </div>
 
-                <!-- CODA TASK CON FILTRI INCLUSO FILTRO STATO -->
+                <!-- CODA TASK CON FILTRI -->
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
                     <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div class="flex items-center space-x-2">
@@ -304,33 +299,33 @@
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
-                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3" ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDropKanban(event, 'in_corso')">
+                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3">
                         <div class="font-bold text-slate-700 text-xs sm:text-sm flex justify-between items-center">
                             <span>IN CORSO</span>
                             <span id="kanban-count-in_corso" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full">0</span>
                         </div>
-                        <div id="kanban-col-in_corso" class="space-y-3 min-h-[250px]"></div>
+                        <div id="kanban-col-in_corso" class="space-y-3 min-h-[200px]"></div>
                     </div>
-                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3" ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDropKanban(event, 'in_attesa')">
+                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3">
                         <div class="font-bold text-slate-700 text-xs sm:text-sm flex justify-between items-center">
                             <span>IN ATTESA</span>
                             <span id="kanban-count-in_attesa" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full">0</span>
                         </div>
-                        <div id="kanban-col-in_attesa" class="space-y-3 min-h-[250px]"></div>
+                        <div id="kanban-col-in_attesa" class="space-y-3 min-h-[200px]"></div>
                     </div>
-                    <div class="bg-purple-50 p-4 rounded-xl border border-purple-200 space-y-3" ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDropKanban(event, 'parked')">
+                    <div class="bg-purple-50 p-4 rounded-xl border border-purple-200 space-y-3">
                         <div class="font-bold text-purple-900 text-xs sm:text-sm flex justify-between items-center">
                             <span>PARKED 🅿️</span>
                             <span id="kanban-count-parked" class="bg-purple-200 text-purple-800 text-xs px-2 py-0.5 rounded-full">0</span>
                         </div>
-                        <div id="kanban-col-parked" class="space-y-3 min-h-[250px]"></div>
+                        <div id="kanban-col-parked" class="space-y-3 min-h-[200px]"></div>
                     </div>
-                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3" ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDropKanban(event, 'completato')">
+                    <div class="bg-slate-100 p-4 rounded-xl border space-y-3">
                         <div class="font-bold text-slate-700 text-xs sm:text-sm flex justify-between items-center">
                             <span>COMPLETATI</span>
                             <span id="kanban-count-completato" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full">0</span>
                         </div>
-                        <div id="kanban-col-completato" class="space-y-3 min-h-[250px]"></div>
+                        <div id="kanban-col-completato" class="space-y-3 min-h-[200px]"></div>
                     </div>
                 </div>
             </div>
@@ -340,7 +335,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                         <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Programma Settimanale</h2>
-                        <p class="text-gray-500 text-xs sm:text-sm">Inclusione automatica di Festività Nazionali e Ferie con data esplicita.</p>
+                        <p class="text-gray-500 text-xs sm:text-sm">Usa il menu "Sposta a Settimana" per posizionare i task con un clic.</p>
                     </div>
                     <div id="admin-user-filter-program" class="hidden flex items-center space-x-2 bg-blue-50 border border-blue-200 p-2 rounded-lg text-xs">
                         <span class="font-bold text-blue-900">Vista Utente:</span>
@@ -515,10 +510,11 @@
         </div>
     </div>
 
-    <!-- LOGICA JS V2.1 COMPLETA E CORRETTA -->
+    <!-- LOGICA JS V2.2 CON SELETTORI RAPIDI -->
     <script>
         const SUPABASE_URL = "https://fpnetrdboqanxfeemajg.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_2H6o6gTA4lBy4RlG50p1eQ_iPp03lY6";
+        const GOOGLE_API_KEY = "AIzaSyCsz2vANH9C5bPgWJIkVDwhboK2QqHYb14";
 
         function getSupabase() {
             if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
@@ -538,7 +534,6 @@
         let allUsersList = [];
         let selectedTypes = [];
         let editSelectedTypes = [];
-        let draggedTaskId = null;
 
         let isAdminTeamModeEnabled = false;
         let selectedUserFilter = "me";
@@ -653,45 +648,12 @@
             return '';
         }
 
-        // DRAG & DROP INFALLIBILE
-        function handleDragStart(ev, taskId) {
-            draggedTaskId = taskId;
-            try { 
-                ev.dataTransfer.setData("text/plain", taskId);
-                ev.dataTransfer.effectAllowed = "move";
-            } catch(e){}
-        }
-
-        function allowDrop(ev) {
-            ev.preventDefault();
-            try { ev.dataTransfer.dropEffect = "move"; } catch(e){}
-            if (ev.currentTarget) ev.currentTarget.classList.add('drag-over-zone');
-        }
-
-        function clearDropStyle(ev) {
-            if (ev.currentTarget) ev.currentTarget.classList.remove('drag-over-zone');
-        }
-
-        async function handleDropKanban(ev, newStatus) {
-            ev.preventDefault();
-            clearDropStyle(ev);
-            const taskId = draggedTaskId || (ev.dataTransfer ? ev.dataTransfer.getData("text/plain") : null);
-            if (taskId) {
-                await updateTaskStatus(taskId, newStatus);
-                draggedTaskId = null;
-            }
-        }
-
-        async function handleDropWeek(ev, targetWeekNum) {
-            ev.preventDefault();
-            clearDropStyle(ev);
-            const taskId = draggedTaskId || (ev.dataTransfer ? ev.dataTransfer.getData("text/plain") : null);
-            if (taskId) {
-                const client = supabaseClient || getSupabase();
-                await client.from('tasks').update({ week: targetWeekNum }).eq('id', taskId);
-                draggedTaskId = null;
-                await loadTasksFromCloud();
-            }
+        // AGGIORNAMENTO RAPIDO SETTIMANA TASK
+        async function moveTaskToWeek(taskId, newWeek) {
+            const client = supabaseClient || getSupabase();
+            const weekVal = (newWeek === "" || newWeek === "null") ? null : parseInt(newWeek);
+            await client.from('tasks').update({ week: weekVal }).eq('id', taskId);
+            await loadTasksFromCloud();
         }
 
         window.onload = async function() {
@@ -1176,7 +1138,7 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        // RENDERING KANBAN CON DRAG & DROP RIPRISTINATO
+        // KANBAN CON SELETTORE STATO RAPIDO DEDICATO SULLA SCHEDA
         function renderKanban() {
             const cols = ['in_corso', 'in_attesa', 'parked', 'completato'];
             cols.forEach(function(col) {
@@ -1188,24 +1150,32 @@
                 if (countBadge) countBadge.innerText = items.length;
 
                 if (items.length === 0) {
-                    container.innerHTML = '<p class="text-xs text-gray-400 p-3 text-center border border-dashed rounded-lg">Trascina un task qui</p>';
+                    container.innerHTML = '<p class="text-xs text-gray-400 p-3 text-center border border-dashed rounded-lg">Nessun task in questa colonna</p>';
                     return;
                 }
 
                 container.innerHTML = items.map(function(t) {
-                    return '<div draggable="true" ondragstart="handleDragStart(event, \'' + t.id + '\')" class="bg-white drag-card p-3 rounded-lg border shadow-sm space-y-2 hover:border-blue-400 transition">' +
-                        '<div class="flex justify-between items-start">' +
-                            '<p class="text-sm font-semibold text-gray-800">' + t.title + '</p>' +
+                    return '<div class="bg-white p-3 rounded-lg border shadow-sm space-y-2.5 hover:border-blue-300 transition">' +
+                        '<div class="flex justify-between items-start gap-2">' +
+                            '<p class="text-sm font-semibold text-gray-800 leading-snug">' + t.title + '</p>' +
+                            '<button onclick="openEditModal(\'' + t.id + '\')" class="text-gray-400 hover:text-blue-600 p-0.5"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>' +
                         '</div>' +
-                        '<div class="flex justify-between items-center text-[10px] text-gray-500">' +
-                            '<span class="bg-blue-100 text-blue-800 font-medium px-2 py-0.5 rounded">' + (t.project || 'Generale') + '</span>' +
-                            getUserOwnerBadge(t) +
+                        '<div class="flex items-center justify-between text-[10px] text-gray-500 pt-1 border-t border-gray-100">' +
+                            '<span class="bg-blue-100 text-blue-800 font-medium px-2 py-0.5 rounded truncate max-w-[100px]">' + (t.project || 'Generale') + '</span>' +
+                            '<select onchange="updateTaskStatus(\'' + t.id + '\', this.value)" class="bg-slate-100 border rounded px-1.5 py-0.5 font-semibold text-slate-700 outline-none text-[10px] cursor-pointer hover:bg-slate-200 transition">' +
+                                '<option value="in_corso" ' + (t.status === 'in_corso' ? 'selected' : '') + '>In Corso</option>' +
+                                '<option value="in_attesa" ' + (t.status === 'in_attesa' ? 'selected' : '') + '>In Attesa</option>' +
+                                '<option value="parked" ' + (t.status === 'parked' ? 'selected' : '') + '>Parked 🅿️</option>' +
+                                '<option value="completato" ' + (t.status === 'completato' ? 'selected' : '') + '>Completato ✅</option>' +
+                            '</select>' +
                         '</div>' +
                     '</div>';
                 }).join('');
             });
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
+        // PROGRAMMA SETTIMANALE CON SELETTORE SETTIMANA SULLA SCHEDA
         function renderProgram() {
             const container = document.getElementById('program-weeks-container');
             if (!container) return;
@@ -1256,18 +1226,29 @@
                     const bgClass = isCompleted ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200';
                     const statusBadge = isCompleted ? '<span class="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">FATTO</span>' : (t.status === 'parked' ? '<span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded">PARKED</span>' : '<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">IN CORSO</span>');
 
-                    return '<div draggable="true" ondragstart="handleDragStart(event, \'' + t.id + '\')" class="' + bgClass + ' drag-card p-3 rounded-lg border shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 transition hover:border-blue-500">' +
+                    // MENU OPZIONI SPOSTAMENTO
+                    const weekOptions = weeksData.map(wd => {
+                        const sel = (t.week == wd.weekNum) ? 'selected' : '';
+                        return `<option value="${wd.weekNum}" ${sel}>Sposta in Sett. ${wd.weekNum}</option>`;
+                    }).join('');
+
+                    return '<div class="' + bgClass + ' p-3 rounded-lg border shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 transition">' +
                         '<div class="flex items-center space-x-2 truncate">' +
                             '<span class="font-medium text-sm ' + (isCompleted ? 'line-through text-gray-400' : 'text-gray-800') + '">' + t.title + '</span>' +
                             '<span class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-medium">' + (t.project || 'Generale') + '</span>' +
                             getUserOwnerBadge(t) +
                         '</div>' +
-                        '<div class="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-2 sm:pt-0">' +
+                        '<div class="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-2 sm:pt-0 text-xs">' +
                             statusBadge +
                             getDeadlineBadge(t.deadline) +
                             getCompletedDateBadge(t) +
                             '<span class="bg-purple-100 text-purple-800 text-xs font-bold px-2 py-0.5 rounded">' + (t.size || 'M') + '</span>' +
-                            '<button onclick="removeTaskFromWeek(\'' + t.id + '\')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1 rounded font-bold ml-2" title="Rimuovi da questa settimana">❌</button>' +
+                            
+                            '<!-- SELETTORE RAPIDO SETTIMANA -->' +
+                            '<select onchange="moveTaskToWeek(\'' + t.id + '\', this.value)" class="bg-blue-50 border border-blue-200 text-blue-900 font-bold px-2 py-1 rounded outline-none text-[11px] cursor-pointer hover:bg-blue-100 transition">' +
+                                weekOptions +
+                                '<option value="null">❌ Rimuovi da Settimana</option>' +
+                            '</select>' +
                         '</div>' +
                     '</div>';
                 }).join('');
@@ -1288,7 +1269,7 @@
 
                 const totalItemsCount = wTasks.length + wKeyEvents.length;
 
-                return '<div ondragover="allowDrop(event)" ondragleave="clearDropStyle(event)" ondrop="handleDropWeek(event, ' + wInfo.weekNum + ')" class="bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm space-y-3 transition">' +
+                return '<div class="bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm space-y-3 transition">' +
                     '<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-2 gap-2">' +
                         '<div>' +
                             '<h3 class="font-bold text-gray-800 text-base">Settimana ' + wInfo.weekNum + '</h3>' +
